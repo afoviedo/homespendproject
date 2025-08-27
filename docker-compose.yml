@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: homespend_app
+    restart: always
+    env_file: .env
+    environment:
+      - ENV=production
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - homespend_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  homespend_network:
+    driver: bridge
+
+volumes:
+  logs:
+    driver: local
