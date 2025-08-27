@@ -5,7 +5,7 @@ Fixed Expenses Page - Manage fixed monthly expenses
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
-from ..layout import layout
+from layout import layout
 
 
 def create_layout(fixed_expenses_data = None):

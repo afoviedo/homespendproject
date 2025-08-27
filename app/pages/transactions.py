@@ -6,7 +6,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 import pandas as pd
 
-from ..layout import layout
+from layout import layout
 
 
 def create_layout(data: pd.DataFrame = None):

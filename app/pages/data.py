@@ -5,7 +5,7 @@ Data Page - Raw data preview and management
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 
-from ..layout import layout
+from layout import layout
 
 
 def create_layout(raw_data = None, processed_data = None):

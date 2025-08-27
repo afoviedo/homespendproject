@@ -9,7 +9,7 @@ import plotly.express as px
 import pandas as pd
 from datetime import datetime
 
-from ..layout import layout
+from layout import layout
 
 
 def create_layout(data: pd.DataFrame = None, kpis: dict = None):
