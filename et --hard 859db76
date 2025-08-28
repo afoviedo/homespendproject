@@ -1,0 +1,9 @@
+[33m7fad659[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m fix: Simplify data loading to prevent timeout - Remove OneDrive loading from initial callback - Always return sample data for fast loading
+[33mae753a4[m fix: Add timeout protection and sample data fallback
+[33mbc41ac4[m fix: Add expose port for Traefik to access container
+[33me47bacf[m fix: Resolve dashboard 'Updating...' hang issue
+[33m859db76[m fix: Implement server-side session storage to resolve cookie size issue
+[33m82a7036[m feat: Add Traefik integration for HTTPS support
+[33m0bbd2e7[m  Fix Python imports and Docker compose
+[33m91aa53f[m  Complete HomeSpend implementation
+[33mfe7fcde[m  Initial commit: HomeSpend Dashboard Financiero Premium
