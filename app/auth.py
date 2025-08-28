@@ -20,6 +20,13 @@ class MicrosoftAuth:
         self.app = app
         self.oauth = OAuth(app)
         
+        # Initialize in-memory token store (use Redis/DB for production scaling)
+        if not hasattr(app, 'token_store'):
+            app.token_store = {}
+        
+        # Clean up expired tokens periodically
+        self._cleanup_expired_tokens()
+        
         # Microsoft OAuth configuration
         self.client_id = os.getenv('MS_CLIENT_ID')
         self.client_secret = os.getenv('MS_CLIENT_SECRET')
@@ -75,12 +82,20 @@ class MicrosoftAuth:
                 # Get user info
                 user_info = self._get_user_info(token['access_token'])
                 
-                # Store tokens and user info in session
-                session['access_token'] = token['access_token']
-                session['refresh_token'] = token.get('refresh_token')
-                session['token_expires_at'] = datetime.now() + timedelta(seconds=token.get('expires_in', 3600))
-                session['user_info'] = user_info
+                # Store only essential data in session (small cookie)
+                user_id = user_info.get('id', f"user_{secrets.token_hex(8)}")
                 session['authenticated'] = True
+                session['user_id'] = user_id
+                session['user_name'] = user_info.get('displayName', 'Usuario')
+                
+                # Store tokens and full user info in server-side store
+                self.app.token_store[user_id] = {
+                    'access_token': token['access_token'],
+                    'refresh_token': token.get('refresh_token'),
+                    'expires_at': datetime.now() + timedelta(seconds=token.get('expires_in', 3600)),
+                    'user_info': user_info,
+                    'created_at': datetime.now()
+                }
                 
                 # Clear OAuth state
                 session.pop('oauth_state', None)
@@ -94,6 +109,11 @@ class MicrosoftAuth:
         @self.app.route('/logout')
         def logout():
             """Logout user and clear session"""
+            # Clean up server-side token store
+            user_id = session.get('user_id')
+            if user_id and user_id in self.app.token_store:
+                del self.app.token_store[user_id]
+            
             session.clear()
             logout_url = f"https://login.microsoftonline.com/{self.tenant_id}/oauth2/v2.0/logout"
             return redirect(logout_url)
@@ -115,7 +135,12 @@ class MicrosoftAuth:
     
     def _is_token_valid(self) -> bool:
         """Check if access token is still valid"""
-        expires_at = session.get('token_expires_at')
+        user_id = session.get('user_id')
+        if not user_id or user_id not in self.app.token_store:
+            return False
+        
+        token_data = self.app.token_store[user_id]
+        expires_at = token_data.get('expires_at')
         if not expires_at:
             return False
         
@@ -130,18 +155,29 @@ class MicrosoftAuth:
         if not self.is_authenticated():
             return None
         
+        user_id = session.get('user_id')
+        if not user_id or user_id not in self.app.token_store:
+            return None
+        
         # Check if token needs refresh
         if not self._is_token_valid():
             if self._refresh_token():
-                return session.get('access_token')
+                token_data = self.app.token_store.get(user_id, {})
+                return token_data.get('access_token')
             else:
                 return None
         
-        return session.get('access_token')
+        token_data = self.app.token_store[user_id]
+        return token_data.get('access_token')
     
     def _refresh_token(self) -> bool:
         """Refresh access token using refresh token"""
-        refresh_token = session.get('refresh_token')
+        user_id = session.get('user_id')
+        if not user_id or user_id not in self.app.token_store:
+            return False
+            
+        token_data = self.app.token_store[user_id]
+        refresh_token = token_data.get('refresh_token')
         if not refresh_token:
             return False
         
@@ -157,13 +193,14 @@ class MicrosoftAuth:
             response = requests.post(self.token_endpoint, data=data)
             
             if response.status_code == 200:
-                token_data = response.json()
+                new_token_data = response.json()
                 
-                # Update session with new tokens
-                session['access_token'] = token_data['access_token']
-                if 'refresh_token' in token_data:
-                    session['refresh_token'] = token_data['refresh_token']
-                session['token_expires_at'] = datetime.now() + timedelta(seconds=token_data.get('expires_in', 3600))
+                # Update server-side token store
+                self.app.token_store[user_id].update({
+                    'access_token': new_token_data['access_token'],
+                    'refresh_token': new_token_data.get('refresh_token', refresh_token),
+                    'expires_at': datetime.now() + timedelta(seconds=new_token_data.get('expires_in', 3600))
+                })
                 
                 return True
             else:
@@ -176,7 +213,36 @@ class MicrosoftAuth:
     
     def get_user_info(self) -> Dict[str, Any]:
         """Get current user information"""
-        return session.get('user_info', {})
+        user_id = session.get('user_id')
+        if not user_id or user_id not in self.app.token_store:
+            return {}
+        
+        token_data = self.app.token_store[user_id]
+        return token_data.get('user_info', {})
+    
+    def _cleanup_expired_tokens(self):
+        """Clean up expired tokens from memory store"""
+        try:
+            current_time = datetime.now()
+            expired_users = []
+            
+            for user_id, token_data in self.app.token_store.items():
+                expires_at = token_data.get('expires_at')
+                created_at = token_data.get('created_at', current_time)
+                
+                # Remove tokens expired for more than 1 hour or older than 24 hours
+                if (expires_at and current_time > expires_at + timedelta(hours=1)) or \
+                   (current_time > created_at + timedelta(hours=24)):
+                    expired_users.append(user_id)
+            
+            for user_id in expired_users:
+                del self.app.token_store[user_id]
+                
+            if expired_users:
+                self.app.logger.info(f"Cleaned up {len(expired_users)} expired token(s)")
+                
+        except Exception as e:
+            self.app.logger.error(f"Token cleanup error: {str(e)}")
 
 
 def require_auth(auth_instance):
