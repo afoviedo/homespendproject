@@ -6,12 +6,16 @@ services:
     env_file: .env
     environment:
       - ENV=production
-    ports:
-      - "127.0.0.1:8090:8090"
-    volumes:
-      - ./logs:/app/logs
     networks:
+      - root_default  # Red de Traefik
       - homespend_network
+    labels:
+      # Etiquetas para Traefik
+      - "traefik.enable=true"
+      - "traefik.http.routers.homespend.rule=Host(`homespend.srv867766.hstgr.cloud`)"
+      - "traefik.http.routers.homespend.entrypoints=websecure"
+      - "traefik.http.routers.homespend.tls.certresolver=mytlschallenge"
+      - "traefik.http.services.homespend.loadbalancer.server.port=8090"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/"]
       interval: 30s
@@ -22,6 +26,8 @@ services:
 networks:
   homespend_network:
     driver: bridge
+  root_default:
+    external: true  # Red externa de Traefik
 
 volumes:
   logs:
