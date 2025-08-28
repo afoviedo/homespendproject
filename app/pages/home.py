@@ -45,7 +45,7 @@ def create_layout(data: pd.DataFrame = None, kpis: dict = None):
             layout.create_kpi_card(
                 title="Gasto Total (Mes Actual)",
                 value=format_currency(kpis.get('total_amount', 0)),
-                delta=kpis.get('month_delta', "0%"),
+                delta=kpis.get('month_delta', 0),
                 icon="fas fa-wallet",
                 color="primary"
             )
