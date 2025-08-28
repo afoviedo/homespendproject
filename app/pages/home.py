@@ -44,8 +44,8 @@ def create_layout(data: pd.DataFrame = None, kpis: dict = None):
         dbc.Col([
             layout.create_kpi_card(
                 title="Gasto Total (Mes Actual)",
-                value=format_currency(kpis['total_amount']),
-                delta=kpis['month_delta'],
+                value=format_currency(kpis.get('total_amount', 0)),
+                delta=kpis.get('month_delta', "0%"),
                 icon="fas fa-wallet",
                 color="primary"
             )
@@ -54,7 +54,7 @@ def create_layout(data: pd.DataFrame = None, kpis: dict = None):
         dbc.Col([
             layout.create_kpi_card(
                 title="# Transacciones",
-                value=str(int(kpis['transaction_count'])),
+                value=str(int(kpis.get('transaction_count', 0))),
                 icon="fas fa-receipt",
                 color="info"
             )
@@ -63,7 +63,7 @@ def create_layout(data: pd.DataFrame = None, kpis: dict = None):
         dbc.Col([
             layout.create_kpi_card(
                 title="Ticket Promedio",
-                value=format_currency(kpis['average_ticket']),
+                value=format_currency(kpis.get('average_ticket', 0)),
                 icon="fas fa-chart-bar",
                 color="success"
             )
@@ -72,8 +72,8 @@ def create_layout(data: pd.DataFrame = None, kpis: dict = None):
         dbc.Col([
             layout.create_kpi_card(
                 title="Δ vs Mes Anterior",
-                value=f"{kpis['month_delta']:+.1f}%",
-                icon="fas fa-trending-up" if kpis['month_delta'] > 0 else "fas fa-trending-down",
+                value=f"{kpis.get('month_delta', 0):+.1f}%",
+                icon="fas fa-trending-up" if kpis.get('month_delta', 0) > 0 else "fas fa-trending-down",
                 color="warning"
             )
         ], width=12, lg=3, className="mb-3"),
