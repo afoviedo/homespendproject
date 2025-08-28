@@ -62,6 +62,7 @@ class HomeSpendETL:
             'Fecha': 'Date',
             'Descripción': 'Description', 
             'Descripcion': 'Description',
+            'Business': 'Description',  # English version
             'Monto': 'Amount',
             'Responsable': 'Responsible',
             'Tarjeta': 'Card'
