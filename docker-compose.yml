@@ -6,6 +6,8 @@ services:
     env_file: .env
     environment:
       - ENV=production
+    expose:
+      - "8090"
     networks:
       - root_default  # Red de Traefik
       - homespend_network
@@ -16,6 +18,8 @@ services:
       - "traefik.http.routers.homespend.entrypoints=websecure"
       - "traefik.http.routers.homespend.tls.certresolver=mytlschallenge"
       - "traefik.http.services.homespend.loadbalancer.server.port=8090"
+      - "traefik.http.services.homespend.loadbalancer.healthcheck.timeout=30s"
+      - "traefik.http.services.homespend.loadbalancer.responseforwarding.flushinterval=1s"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8090/"]
       interval: 30s
