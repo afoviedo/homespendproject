@@ -55,8 +55,9 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
+                        # First Row - Date Range and Period
                         dbc.Row([
-                            # Date Range Filter - Using HTML5 date inputs for better navigation
+                            # Date Range Filter
                             dbc.Col([
                                 html.Label("Rango de Fechas:", className="fw-bold mb-2"),
                                 dbc.Row([
@@ -85,31 +86,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                         )
                                     ], width=6)
                                 ])
-                            ], width=12, lg=4),
-                            
-                            # Responsible Filter (Multi-select)
-                            dbc.Col([
-                                html.Label("Responsables:", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id="responsible-filter",
-                                    options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
-                                    value=[],  # Empty list for multi-select
-                                    multi=True,
-                                    placeholder="Selecciona responsables (vacío = todos)"
-                                )
-                            ], width=12, lg=3),
-                            
-                            # Category Filter (Multi-select)
-                            dbc.Col([
-                                html.Label("Categorías:", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id="category-filter",
-                                    options=[],  # Will be populated dynamically
-                                    value=[],  # Empty list for multi-select
-                                    multi=True,
-                                    placeholder="Selecciona categorías (vacío = todas)"
-                                )
-                            ], width=12, lg=3),
+                            ], width=12, lg=6),
                             
                             # Chart Period Filter
                             dbc.Col([
@@ -124,7 +101,34 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     value="monthly",
                                     clearable=False
                                 )
-                            ], width=12, lg=3),
+                            ], width=12, lg=6),
+                        ], className="mb-3"),
+                        
+                        # Second Row - Responsible and Category Filters
+                        dbc.Row([
+                            # Responsible Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Responsables:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="responsible-filter",
+                                    options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona responsables (vacío = todos)"
+                                )
+                            ], width=12, lg=6),
+                            
+                            # Category Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Categorías:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="category-filter",
+                                    options=[],  # Will be populated dynamically
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona categorías (vacío = todas)"
+                                )
+                            ], width=12, lg=6),
                         ])
                     ])
                 ])
@@ -467,25 +471,44 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
 )
 def populate_category_filter(data):
     """Populate category filter options from data"""
+    print(f"Category filter callback triggered with data: {data is not None}")
+    
     if not data or not data.get('processed_data'):
+        print("No data available for category filter")
         return []
     
     try:
         df = pd.DataFrame(data['processed_data'])
-        if df.empty or 'Category' not in df.columns:
+        print(f"Category filter data: {len(df)} records")
+        print(f"Available columns: {list(df.columns)}")
+        
+        if df.empty:
+            print("DataFrame is empty for category filter")
             return []
+        
+        if 'Category' not in df.columns:
+            print("Category column not found in DataFrame")
+            print(f"Available columns: {list(df.columns)}")
+            return []
+        
+        # Check for non-null categories
+        category_counts = df['Category'].value_counts()
+        print(f"Category value counts: {category_counts.to_dict()}")
         
         # Get unique categories and sort them
         categories = sorted(df['Category'].unique().tolist())
+        print(f"Unique categories found: {categories}")
         
-        # Create options for dropdown
+        # Create options for dropdown (filter out empty/null values)
         options = [{"label": cat, "value": cat} for cat in categories if cat and str(cat).strip()]
         
-        print(f"Populated category filter with {len(options)} options")
+        print(f"Populated category filter with {len(options)} options: {[opt['label'] for opt in options]}")
         return options
         
     except Exception as e:
         print(f"Error populating category filter: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 
