@@ -110,13 +110,13 @@ class HomeSpendETL:
                 formats = ['%Y-%m-%d', '%d/%m/%Y', '%m/%d/%Y', '%d-%m-%Y']
                 for fmt in formats:
                     try:
-                        return datetime.strptime(date_val, fmt).date()
+                        return pd.Timestamp(datetime.strptime(date_val, fmt))
                     except ValueError:
                         continue
             
             # Try pandas to_datetime as fallback
             try:
-                return pd.to_datetime(date_val).date()
+                return pd.to_datetime(date_val)
             except:
                 return None
         
@@ -205,7 +205,7 @@ class HomeSpendETL:
         fixed_rows = []
         for expense in self.fixed_expenses:
             fixed_row = expense.copy()
-            fixed_row['Date'] = first_day
+            fixed_row['Date'] = pd.Timestamp(first_day)  # Convert to Timestamp for consistency
             fixed_rows.append(fixed_row)
         
         # Convert to DataFrame and combine
