@@ -1,0 +1,72 @@
+/* Fix for double scrollbar in dropdowns */
+/* This removes the duplicate scrollbar that appears in Dash dropdowns */
+
+/* Target the dropdown menu container */
+.Select-menu-outer {
+    /* Remove default scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.Select-menu-outer::-webkit-scrollbar {
+    display: none;
+}
+
+/* Target the inner menu */
+.Select-menu {
+    /* Remove default scrollbar */
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+/* Hide scrollbar for WebKit browsers (Chrome, Safari, Edge) */
+.Select-menu::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ensure proper scrolling behavior */
+.Select-menu-outer {
+    overflow-y: auto !important;
+    max-height: 200px !important;
+}
+
+/* Alternative: Show only one clean scrollbar */
+.Select-menu-outer {
+    /* Custom scrollbar styling */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: #888 #f1f1f1; /* Firefox */
+}
+
+/* Custom scrollbar for WebKit browsers */
+.Select-menu-outer::-webkit-scrollbar {
+    width: 6px;
+    display: block;
+}
+
+.Select-menu-outer::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.Select-menu-outer::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.Select-menu-outer::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .Select-menu-outer::-webkit-scrollbar-track {
+    background: #495057;
+}
+
+[data-bs-theme="dark"] .Select-menu-outer::-webkit-scrollbar-thumb {
+    background: #6c757d;
+}
+
+[data-bs-theme="dark"] .Select-menu-outer::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
