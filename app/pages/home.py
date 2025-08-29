@@ -21,6 +21,26 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
     # Get unique responsibles for filter
     responsibles = ["Todos"] + sorted(df['Responsible'].unique().tolist())
     
+    # Get unique categories for filter (with fallback logic)
+    if 'Category' in df.columns and not df['Category'].isna().all():
+        category_column = 'Category'
+        print(f"Using Category column for initial layout")
+    elif 'Description' in df.columns:
+        category_column = 'Description'
+        print(f"Using Description column as fallback for initial layout")
+    else:
+        category_column = None
+        print(f"No category column available for initial layout")
+    
+    if category_column:
+        categories = sorted(df[category_column].unique().tolist())
+        # Filter out empty/null values
+        categories = [cat for cat in categories if cat and str(cat).strip()]
+        print(f"Found {len(categories)} categories for initial layout: {categories[:5]}...")  # Show first 5
+    else:
+        categories = []
+        print("No categories available for initial layout")
+    
     # Calculate date range with extended limits
     min_date = pd.to_datetime(df['Date']).min().date()
     max_date = pd.to_datetime(df['Date']).max().date()
@@ -123,7 +143,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                 html.Label("Categorías:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id="category-filter",
-                                    options=[],  # Will be populated dynamically
+                                    options=[{"label": cat, "value": cat} for cat in categories],
                                     value=[],  # Empty list for multi-select
                                     multi=True,
                                     placeholder="Selecciona categorías (vacío = todas)"
@@ -462,68 +482,10 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
         return today.replace(day=1), today, [], "monthly"
 
 
-@callback(
-    Output("category-filter", "value"),
-    [Input("home-data-store", "data")]
-)
-def initialize_category_filter_value(data):
-    """Initialize category filter value"""
-    print(f"Category filter value callback triggered")
-    return []
+# Removed initialize_category_filter_value callback - not needed with initial layout approach
 
 
-@callback(
-    Output("category-filter", "options"),
-    [Input("home-data-store", "data")]
-)
-def populate_category_filter(data):
-    """Populate category filter options from data"""
-    print(f"Category filter callback triggered with data: {data is not None}")
-    
-    if not data or not data.get('processed_data'):
-        print("No data available for category filter")
-        return []
-    
-    try:
-        df = pd.DataFrame(data['processed_data'])
-        print(f"Category filter data: {len(df)} records")
-        print(f"Available columns: {list(df.columns)}")
-        
-        if df.empty:
-            print("DataFrame is empty for category filter")
-            return []
-        
-        # Use Category column if available, otherwise fallback to Description
-        if 'Category' in df.columns and not df['Category'].isna().all():
-            category_column = 'Category'
-            print("Using Category column for filter options")
-        elif 'Description' in df.columns:
-            category_column = 'Description'
-            print("Using Description column as fallback for filter options")
-        else:
-            print("No category or description column available")
-            print(f"Available columns: {list(df.columns)}")
-            return []
-        
-        # Check for non-null categories
-        category_counts = df[category_column].value_counts()
-        print(f"Category value counts: {category_counts.to_dict()}")
-        
-        # Get unique categories and sort them
-        categories = sorted(df[category_column].unique().tolist())
-        print(f"Unique categories found: {categories}")
-        
-        # Create options for dropdown (filter out empty/null values)
-        options = [{"label": cat, "value": cat} for cat in categories if cat and str(cat).strip()]
-        
-        print(f"Populated category filter with {len(options)} options: {[opt['label'] for opt in options]}")
-        return options
-        
-    except Exception as e:
-        print(f"Error populating category filter: {e}")
-        import traceback
-        traceback.print_exc()
-        return []
+# Removed populate_category_filter callback - now using same strategy as responsibles
 
 
 @callback(
