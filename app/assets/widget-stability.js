@@ -30,12 +30,28 @@
             picker.style.zIndex = '1';
         });
         
-        // Fix DatePicker when open
-        const openDatePickers = document.querySelectorAll('.DateRangePicker_picker');
-        openDatePickers.forEach(function(picker) {
-            picker.style.zIndex = '10002';
-            picker.style.position = 'absolute';
+            // Fix DatePicker when open
+    const openDatePickers = document.querySelectorAll('.DateRangePicker_picker');
+    openDatePickers.forEach(function(picker) {
+        picker.style.zIndex = '10002';
+        picker.style.position = 'absolute';
+        picker.style.pointerEvents = 'auto';
+        
+        // Ensure navigation buttons are clickable
+        const navButtons = picker.querySelectorAll('.DateRangePicker_picker__nav--next, .DateRangePicker_picker__nav--prev');
+        navButtons.forEach(function(button) {
+            button.style.zIndex = '10004';
+            button.style.pointerEvents = 'auto';
+            button.style.cursor = 'pointer';
         });
+        
+        // Ensure calendar days are clickable
+        const calendarDays = picker.querySelectorAll('.Calendar__day');
+        calendarDays.forEach(function(day) {
+            day.style.pointerEvents = 'auto';
+            day.style.cursor = 'pointer';
+        });
+    });
     }
     
     // Function to handle sidebar state changes

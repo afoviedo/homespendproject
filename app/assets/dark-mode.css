@@ -269,6 +269,8 @@
 .DateRangePicker_picker__nav {
     background-color: transparent !important;
     border: none !important;
+    cursor: pointer !important;
+    z-index: 10003 !important;
 }
 
 .DateRangePicker_picker__nav--next,
@@ -276,6 +278,9 @@
     background-color: transparent !important;
     border: none !important;
     color: #ffffff !important;
+    cursor: pointer !important;
+    z-index: 10003 !important;
+    pointer-events: auto !important;
 }
 
 [data-bs-theme="light"] .DateRangePicker_picker__nav--next,
@@ -287,11 +292,39 @@
 .DateRangePicker_picker__nav--next:hover,
 .DateRangePicker_picker__nav--prev:hover {
     background-color: rgba(255, 255, 255, 0.1) !important;
+    cursor: pointer !important;
 }
 
 [data-bs-theme="light"] .DateRangePicker_picker__nav--next:hover,
 [data-bs-theme="light"] .DateRangePicker_picker__nav--prev:hover {
     background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Ensure DatePicker calendar is fully interactive */
+.DateRangePicker_picker {
+    z-index: 10002 !important;
+    pointer-events: auto !important;
+}
+
+.DateRangePicker_picker .Calendar {
+    pointer-events: auto !important;
+}
+
+.DateRangePicker_picker .Calendar__month {
+    pointer-events: auto !important;
+}
+
+.DateRangePicker_picker .Calendar__day {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+/* Fix for DatePicker month navigation buttons */
+.DateRangePicker_picker__nav--next,
+.DateRangePicker_picker__nav--prev {
+    position: relative !important;
+    z-index: 10004 !important;
+    pointer-events: auto !important;
 }
 
 /* Ensure proper stacking context */
