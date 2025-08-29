@@ -493,17 +493,24 @@ def populate_category_filter(data):
             print("DataFrame is empty for category filter")
             return []
         
-        if 'Category' not in df.columns:
-            print("Category column not found in DataFrame")
+        # Use Category column if available, otherwise fallback to Description
+        if 'Category' in df.columns and not df['Category'].isna().all():
+            category_column = 'Category'
+            print("Using Category column for filter options")
+        elif 'Description' in df.columns:
+            category_column = 'Description'
+            print("Using Description column as fallback for filter options")
+        else:
+            print("No category or description column available")
             print(f"Available columns: {list(df.columns)}")
             return []
         
         # Check for non-null categories
-        category_counts = df['Category'].value_counts()
+        category_counts = df[category_column].value_counts()
         print(f"Category value counts: {category_counts.to_dict()}")
         
         # Get unique categories and sort them
-        categories = sorted(df['Category'].unique().tolist())
+        categories = sorted(df[category_column].unique().tolist())
         print(f"Unique categories found: {categories}")
         
         # Create options for dropdown (filter out empty/null values)
@@ -589,8 +596,20 @@ def filter_data(start_date, end_date, responsible, category, data):
         
         # Filter by category (multi-select logic)
         if category and len(category) > 0:
-            df = df[df['Category'].isin(category)]
-            print(f"After category filter ({len(category)} selected): {len(df)} records")
+            # Use Category column if available, otherwise fallback to Description
+            if 'Category' in df.columns and not df['Category'].isna().all():
+                category_column = 'Category'
+            elif 'Description' in df.columns:
+                category_column = 'Description'
+            else:
+                print("No category or description column available for filtering")
+                category_column = None
+            
+            if category_column:
+                df = df[df[category_column].isin(category)]
+                print(f"After category filter ({len(category)} selected): {len(df)} records")
+            else:
+                print(f"Category filter not applied - no valid column: {len(df)} records")
         else:
             print(f"No category filter applied (showing all): {len(df)} records")
         
