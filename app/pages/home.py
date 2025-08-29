@@ -62,7 +62,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                 dbc.Row([
                                     dbc.Col([
                                         html.Label("Desde:", className="small text-muted"),
-                                        html.Input(
+                                        dcc.Input(
                                             id="start-date-input",
                                             type="date",
                                             value=min_date.strftime('%Y-%m-%d'),
@@ -74,7 +74,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     ], width=6),
                                     dbc.Col([
                                         html.Label("Hasta:", className="small text-muted"),
-                                        html.Input(
+                                        dcc.Input(
                                             id="end-date-input",
                                             type="date",
                                             value=max_date.strftime('%Y-%m-%d'),
