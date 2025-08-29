@@ -62,8 +62,49 @@ app_data = {
 
 def get_user_display_name():
     """Get user display name from session"""
-    user_info = session.get('user_info', {})
-    return user_info.get('displayName', user_info.get('mail', 'Usuario'))
+    return session.get('user_name', 'Usuario')
+
+
+def create_sample_data():
+    """Create sample data for demonstration"""
+    from datetime import datetime, timedelta
+    import random
+    
+    # Sample data
+    sample_records = []
+    base_date = datetime.now() - timedelta(days=30)
+    
+    merchants = ["SUPERMERCADO LA COSECHA", "GASOLINERA DELTA", "RESTAURANTE MACHU PICCHU", 
+                 "FARMACIA FISCHEL", "UBER TRIP", "WALMART", "AMAZON PRIME", "NETFLIX"]
+    responsibles = ["ALVARO FERNANDO OVIEDO MATAMOROS", "FIORELLA INFANTE AMORE", "LUIS ESTEBAN OVIEDO MATAMOROS"]
+    
+    for i in range(50):
+        date = base_date + timedelta(days=random.randint(0, 30))
+        sample_records.append({
+            'Date': date.strftime('%Y-%m-%d'),
+            'Description': random.choice(merchants),
+            'Amount': random.randint(5000, 150000),
+            'Responsible': random.choice(responsibles),
+            'Card': f"***{random.choice(['9366', '2081', '4136'])}",
+            'Category': 'Gastos Generales'
+        })
+    
+    # Add fixed expenses for current month
+    current_month_start = datetime.now().replace(day=1)
+    fixed_expenses = [
+        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Vivienda', 'Amount': 430000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'},
+        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Vehículo', 'Amount': 230000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'},
+        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Donaciones', 'Amount': 240000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'}
+    ]
+    
+    sample_records.extend(fixed_expenses)
+    
+    return {
+        'raw_data': sample_records,
+        'processed_data': sample_records,
+        'last_refresh': datetime.now().isoformat(),
+        'demo_mode': True
+    }
 
 
 def refresh_data_from_onedrive():
@@ -234,41 +275,23 @@ def display_page(pathname, global_data):
     [Output("global-data-store", "data"),
      Output("global-loading-output", "children")],
     [Input("url", "pathname"),
-     Input("refresh-data-btn", "n_clicks"),
      Input("global-refresh-interval", "n_intervals")],
+    [State("global-data-store", "data")],
     prevent_initial_call=False
 )
-def refresh_global_data(pathname, refresh_clicks, interval_count):
+def refresh_global_data(pathname, interval_count, current_data):
     """Refresh global data from OneDrive"""
     
     if not auth.is_authenticated():
         return {}, html.Div()
     
-    # Initial load or manual refresh
-    if app_data['processed_data'] is None or refresh_clicks:
-        success, message = refresh_data_from_onedrive()
-        
-        if success:
-            data_store = {
-                'raw_data': app_data['raw_data'].to_dict('records') if app_data['raw_data'] is not None else [],
-                'processed_data': app_data['processed_data'].to_dict('records') if app_data['processed_data'] is not None else [],
-                'last_refresh': app_data['last_refresh'].isoformat() if app_data['last_refresh'] else None
-            }
-            return data_store, html.Div()
-        else:
-            # Return empty data on error
-            return {'error': message}, html.Div()
-    
-    # Return existing data
-    if app_data['processed_data'] is not None:
-        data_store = {
-            'raw_data': app_data['raw_data'].to_dict('records') if app_data['raw_data'] is not None else [],
-            'processed_data': app_data['processed_data'].to_dict('records') if app_data['processed_data'] is not None else [],
-            'last_refresh': app_data['last_refresh'].isoformat() if app_data['last_refresh'] else None
-        }
-        return data_store, html.Div()
-    
-    return {}, html.Div()
+    # Return empty data for now to avoid timeout
+    # OneDrive integration will be implemented later
+    return {
+        'raw_data': [],
+        'processed_data': [],
+        'last_refresh': None
+    }, html.Div()
 
 
 # Sidebar toggle callback
