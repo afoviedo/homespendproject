@@ -130,3 +130,56 @@
 [data-bs-theme="dark"] .navbar-dark {
     background-color: #212529 !important;
 }
+
+/* Widget stability improvements */
+.Select-control {
+    transition: all 0.2s ease !important;
+}
+
+.Select-control:hover {
+    border-color: #007bff !important;
+}
+
+/* Prevent widget flickering */
+.Select-menu-outer {
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+/* DatePicker stability */
+.DateInput {
+    transition: all 0.2s ease !important;
+}
+
+.DateRangePickerInput {
+    transition: all 0.2s ease !important;
+}
+
+/* Prevent dropdown menus from disappearing */
+.Select-menu {
+    max-height: 200px !important;
+    overflow-y: auto !important;
+}
+
+/* Ensure proper z-index for all dropdowns */
+.Select-menu-outer,
+.DateRangePicker_picker,
+.DateInput_fang {
+    z-index: 9999 !important;
+}
+
+/* Improve dropdown positioning */
+.Select-menu-outer {
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    right: 0 !important;
+}
+
+/* Prevent layout shifts */
+.Select-placeholder,
+.Select-value-label {
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}

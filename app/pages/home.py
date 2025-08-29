@@ -60,7 +60,11 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     start_date=min_date,
                                     end_date=max_date,
                                     display_format='DD/MM/YYYY',
-                                    style={'width': '100%'}
+                                    style={'width': '100%'},
+                                    min_date_allowed=min_date,
+                                    max_date_allowed=max_date,
+                                    clearable=True,
+                                    updatemode='bothdates'
                                 )
                             ], width=12, lg=4),
                             
@@ -347,6 +351,50 @@ def create_default_kpi_cards():
             )
         ], width=12, lg=3),
     ]
+
+
+@callback(
+    [Output("date-range-picker", "start_date"),
+     Output("date-range-picker", "end_date"),
+     Output("responsible-filter", "value"),
+     Output("chart-period-filter", "value")],
+    [Input("home-data-store", "data")],
+    [State("date-range-picker", "start_date"),
+     State("date-range-picker", "end_date"),
+     State("responsible-filter", "value"),
+     State("chart-period-filter", "value")]
+)
+def initialize_filters(data, current_start, current_end, current_responsible, current_period):
+    """Initialize filters with data range and maintain current values"""
+    if not data or not data.get('processed_data'):
+        return None, None, [], "monthly"
+    
+    try:
+        df = pd.DataFrame(data['processed_data'])
+        if df.empty:
+            return None, None, [], "monthly"
+        
+        # Calculate date range from data
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df = df.dropna(subset=['Date'])
+        
+        if df.empty:
+            return None, None, [], "monthly"
+        
+        min_date = df['Date'].min().date()
+        max_date = df['Date'].max().date()
+        
+        # Maintain current values if they exist and are valid
+        start_date = current_start if current_start else min_date
+        end_date = current_end if current_end else max_date
+        responsible = current_responsible if current_responsible else []
+        period = current_period if current_period else "monthly"
+        
+        return start_date, end_date, responsible, period
+        
+    except Exception as e:
+        print(f"Error initializing filters: {e}")
+        return None, None, [], "monthly"
 
 
 @callback(

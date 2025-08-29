@@ -441,7 +441,9 @@ clientside_callback(
 def sync_page_data(global_data):
     """Sync data to all page stores"""
     if not global_data:
-        return {}, {}, {}, {}
+        # Return empty data structures instead of empty dicts to maintain widget state
+        empty_data = {'processed_data': [], 'raw_data': [], 'kpis': {}}
+        return empty_data, empty_data, empty_data, empty_data
     
     # Add fixed expenses status to fixed page data
     fixed_data = global_data.copy()
