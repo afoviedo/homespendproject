@@ -64,14 +64,15 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                 )
                             ], width=12, lg=4),
                             
-                            # Responsible Filter
+                            # Responsible Filter (Multi-select)
                             dbc.Col([
-                                html.Label("👤 Responsable:", className="fw-bold mb-2"),
+                                html.Label("👤 Responsables:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id="responsible-filter",
-                                    options=[{"label": r, "value": r} for r in responsibles],
-                                    value="Todos",
-                                    clearable=False
+                                    options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona responsables (vacío = todos)"
                                 )
                             ], width=12, lg=4),
                             
@@ -389,10 +390,12 @@ def filter_data(start_date, end_date, responsible, data):
             df = df[df['Date'] <= pd.to_datetime(end_date)]
             print(f"After end date filter: {len(df)} records")
         
-        # Filter by responsible
-        if responsible and responsible != "Todos":
-            df = df[df['Responsible'] == responsible]
-            print(f"After responsible filter: {len(df)} records")
+        # Filter by responsible (multi-select logic)
+        if responsible and len(responsible) > 0:
+            df = df[df['Responsible'].isin(responsible)]
+            print(f"After responsible filter ({len(responsible)} selected): {len(df)} records")
+        else:
+            print(f"No responsible filter applied (showing all): {len(df)} records")
         
         result = {
             'filtered_data': df.to_dict('records'),
@@ -412,30 +415,31 @@ def filter_data(start_date, end_date, responsible, data):
 @callback(
     Output("time-series-chart", "figure"),
     [Input("filtered-data-store", "data"),
-     Input("chart-period-filter", "value")]
+     Input("chart-period-filter", "value"),
+     Input("theme-store", "data")]
 )
-def update_time_series_chart(filtered_data, period):
-    """Update time series chart based on filtered data and period"""
+def update_time_series_chart(filtered_data, period, theme):
+    """Update time series chart based on filtered data, period and theme"""
     print(f"Chart callback triggered with period: {period}")
     print(f"Filtered data available: {filtered_data is not None}")
     
     if not filtered_data or not filtered_data.get('filtered_data'):
         print("No filtered data available for chart")
-        return create_empty_chart()
+        return create_empty_chart(theme=theme)
     
     df = pd.DataFrame(filtered_data['filtered_data'])
     print(f"Chart data: {len(df)} records")
     
     if df.empty:
         print("DataFrame is empty")
-        return create_empty_chart()
+        return create_empty_chart(theme=theme)
     
     # Ensure required columns and data types
     required_columns = ['Date', 'Amount']
     missing_columns = [col for col in required_columns if col not in df.columns]
     if missing_columns:
         print(f"Missing required columns for chart: {missing_columns}")
-        return create_empty_chart()
+        return create_empty_chart(theme=theme)
     
     df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
     df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
@@ -445,7 +449,7 @@ def update_time_series_chart(filtered_data, period):
     
     if df.empty:
         print("No valid data after cleaning")
-        return create_empty_chart()
+        return create_empty_chart(theme=theme)
     
     # Group by period
     try:
@@ -471,7 +475,7 @@ def update_time_series_chart(filtered_data, period):
         print(f"Grouped data: {len(df_grouped)} points")
         
         if df_grouped.empty:
-            return create_empty_chart()
+            return create_empty_chart(theme=theme)
         
         # Create chart
         fig = px.line(
@@ -488,40 +492,46 @@ def update_time_series_chart(filtered_data, period):
             marker=dict(size=8)
         )
         
+        # Customize chart with dynamic theme
+        chart_template = "plotly_dark" if theme == "dark" else "plotly_white"
+        
         fig.update_layout(
-            template="plotly_white",
+            template=chart_template,
             height=400,
             xaxis_title=x_title,
             yaxis_title="Monto (₡)",
             hovermode='x unified',
-            yaxis=dict(tickformat='₡,.0f')
+            yaxis=dict(tickformat='₡,.0f'),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
         )
         
         return fig
         
     except Exception as e:
         print(f"Error creating chart: {e}")
-        return create_empty_chart()
+        return create_empty_chart(theme=theme)
 
 
 @callback(
     Output("category-chart", "figure"),
-    Input("filtered-data-store", "data")
+    [Input("filtered-data-store", "data"),
+     Input("theme-store", "data")]
 )
-def update_category_chart(filtered_data):
-    """Update category chart based on filtered data"""
+def update_category_chart(filtered_data, theme):
+    """Update category chart based on filtered data and theme"""
     print(f"Category chart callback triggered")
     
     if not filtered_data or not filtered_data.get('filtered_data'):
         print("No filtered data available for category chart")
-        return create_empty_chart("No hay datos disponibles para mostrar categorías")
+        return create_empty_chart("No hay datos disponibles para mostrar categorías", theme=theme)
     
     df = pd.DataFrame(filtered_data['filtered_data'])
     print(f"Category chart data: {len(df)} records")
     
     if df.empty:
         print("DataFrame is empty for category chart")
-        return create_empty_chart("No hay datos en el período seleccionado")
+        return create_empty_chart("No hay datos en el período seleccionado", theme=theme)
     
     try:
         # Ensure required columns and data types
@@ -529,14 +539,14 @@ def update_category_chart(filtered_data):
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             print(f"Missing required columns for category chart: {missing_columns}")
-            return create_empty_chart("Error: Columnas faltantes en los datos")
+            return create_empty_chart("Error: Columnas faltantes en los datos", theme=theme)
         
         df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
         df = df.dropna(subset=['Amount'])
         
         if df.empty:
             print("No valid data after cleaning for category chart")
-            return create_empty_chart("No hay datos válidos para mostrar")
+            return create_empty_chart("No hay datos válidos para mostrar", theme=theme)
         
         # Use Description as category (Business column)
         df_grouped = df.groupby('Description')['Amount'].sum().reset_index()
@@ -545,7 +555,7 @@ def update_category_chart(filtered_data):
         print(f"Category grouped data: {len(df_grouped)} categories")
         
         if df_grouped.empty:
-            return create_empty_chart("No hay categorías para mostrar")
+            return create_empty_chart("No hay categorías para mostrar", theme=theme)
         
         # Create horizontal bar chart
         fig = px.bar(
@@ -559,9 +569,11 @@ def update_category_chart(filtered_data):
             color_continuous_scale='Blues'
         )
         
-        # Customize chart
+        # Customize chart with dynamic theme
+        chart_template = "plotly_dark" if theme == "dark" else "plotly_white"
+        
         fig.update_layout(
-            template="plotly_dark",
+            template=chart_template,
             height=400,
             xaxis_title="Monto (₡)",
             yaxis_title="Categoría",
@@ -578,7 +590,7 @@ def update_category_chart(filtered_data):
         
     except Exception as e:
         print(f"Error creating category chart: {e}")
-        return create_empty_chart("Error al procesar datos de categorías")
+        return create_empty_chart("Error al procesar datos de categorías", theme=theme)
 
 
 @callback(
@@ -701,18 +713,23 @@ def update_top_transactions_table(filtered_data):
     return table
 
 
-def create_empty_chart(message="No hay datos disponibles para el período seleccionado"):
+def create_empty_chart(message="No hay datos disponibles para el período seleccionado", theme="dark"):
     """Create empty chart when no data is available"""
     fig = go.Figure()
+    
+    # Dynamic colors based on theme
+    text_color = "#ffffff" if theme == "dark" else "#333333"
+    chart_template = "plotly_dark" if theme == "dark" else "plotly_white"
+    
     fig.add_annotation(
         text=message,
         xref="paper", yref="paper",
         x=0.5, y=0.5, xanchor='center', yanchor='middle',
         showarrow=False,
-        font=dict(size=16, color="gray")
+        font=dict(size=16, color=text_color)
     )
     fig.update_layout(
-        template="plotly_dark",
+        template=chart_template,
         height=400,
         xaxis=dict(showgrid=False, showticklabels=False),
         yaxis=dict(showgrid=False, showticklabels=False),
