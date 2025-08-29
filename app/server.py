@@ -155,9 +155,9 @@ app.layout = html.Div([
     # Theme stylesheet (will be updated dynamically)
     html.Link(id="theme-stylesheet", rel="stylesheet"),
     
-    # Widget stability JavaScript
-    html.Script(src="/assets/widget-stability.js"),
-    html.Script(src="/assets/widget-config.js"),
+    # Widget stability JavaScript - Temporarily disabled for debugging
+    # html.Script(src="/assets/widget-stability.js"),
+    # html.Script(src="/assets/widget-config.js"),
     
     dbc.Container([
         dcc.Location(id="url", refresh=False),
@@ -429,32 +429,32 @@ clientside_callback(
     prevent_initial_call=True
 )
 
-# Additional callback to handle widget stability when sidebar opens/closes
-clientside_callback(
-    """
-    function(is_open) {
-        // Add a small delay to ensure proper z-index handling
-        setTimeout(function() {
-            // Force re-render of any open dropdowns
-            const dropdowns = document.querySelectorAll('.Select-control.is-open');
-            dropdowns.forEach(function(dropdown) {
-                dropdown.style.zIndex = '10002';
-            });
-            
-            // Force re-render of any open date pickers
-            const datePickers = document.querySelectorAll('.DateRangePicker_picker');
-            datePickers.forEach(function(picker) {
-                picker.style.zIndex = '10002';
-            });
-        }, 100);
-        
-        return "";
-    }
-    """,
-    Output("theme-dummy", "children"),
-    Input("sidebar", "is_open"),
-    prevent_initial_call=True
-)
+# Additional callback to handle widget stability when sidebar opens/closes - Temporarily disabled
+# clientside_callback(
+#     """
+#     function(is_open) {
+#         // Add a small delay to ensure proper z-index handling
+#         setTimeout(function() {
+#             // Force re-render of any open dropdowns
+#             const dropdowns = document.querySelectorAll('.Select-control.is-open');
+#             dropdowns.forEach(function(dropdown) {
+#                 dropdown.style.zIndex = '10002';
+#             });
+#             
+#             // Force re-render of any open date pickers
+#             const datePickers = document.querySelectorAll('.DateRangePicker_picker');
+#             datePickers.forEach(function(picker) {
+#                 picker.style.zIndex = '10002';
+#             });
+#         }, 100);
+#         
+#         return "";
+#     }
+#     """,
+#     Output("theme-dummy", "children"),
+#     Input("sidebar", "is_open"),
+#     prevent_initial_call=True
+# )
 
 
 # Note: Page routing is handled by the main display_page callback above (lines 211-271)

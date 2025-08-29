@@ -690,18 +690,18 @@ def update_category_chart(filtered_data, theme):
         return create_empty_chart("Error al procesar datos de categorías", theme=theme)
 
 
-# Additional callback to ensure widget stability
-@callback(
-    Output("filtered-data-store", "data", allow_duplicate=True),
-    Input("sidebar", "is_open"),
-    State("filtered-data-store", "data"),
-    prevent_initial_call=True
-)
-def ensure_widget_stability(sidebar_open, current_filtered_data):
-    """Ensure widgets remain stable when sidebar opens/closes"""
-    # This callback helps maintain widget state when sidebar toggles
-    # It prevents the widgets from losing their state
-    return current_filtered_data if current_filtered_data else {'filtered_data': []}
+# Additional callback to ensure widget stability - Temporarily disabled
+# @callback(
+#     Output("filtered-data-store", "data", allow_duplicate=True),
+#     Input("sidebar", "is_open"),
+#     State("filtered-data-store", "data"),
+#     prevent_initial_call=True
+# )
+# def ensure_widget_stability(sidebar_open, current_filtered_data):
+#     """Ensure widgets remain stable when sidebar opens/closes"""
+#     # This callback helps maintain widget state when sidebar toggles
+#     # It prevents the widgets from losing their state
+#     return current_filtered_data if current_filtered_data else {'filtered_data': []}
 
 
 @callback(
