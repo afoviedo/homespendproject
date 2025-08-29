@@ -75,7 +75,34 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
-                        # First Row - Date Range and Period
+                        # First Row - Responsible and Category Filters
+                        dbc.Row([
+                            # Responsible Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Responsables:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="responsible-filter",
+                                    options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona responsables (vacío = todos)"
+                                )
+                            ], width=12, lg=6),
+                            
+                            # Category Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Categorías:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="category-filter",
+                                    options=[{"label": cat, "value": cat} for cat in categories],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona categorías (vacío = todas)"
+                                )
+                            ], width=12, lg=6),
+                        ], className="mb-3"),
+                        
+                        # Second Row - Date Range and Period
                         dbc.Row([
                             # Date Range Filter
                             dbc.Col([
@@ -120,33 +147,6 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     ],
                                     value="monthly",
                                     clearable=False
-                                )
-                            ], width=12, lg=6),
-                        ], className="mb-3"),
-                        
-                        # Second Row - Responsible and Category Filters
-                        dbc.Row([
-                            # Responsible Filter (Multi-select)
-                            dbc.Col([
-                                html.Label("Responsables:", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id="responsible-filter",
-                                    options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
-                                    value=[],  # Empty list for multi-select
-                                    multi=True,
-                                    placeholder="Selecciona responsables (vacío = todos)"
-                                )
-                            ], width=12, lg=6),
-                            
-                            # Category Filter (Multi-select)
-                            dbc.Col([
-                                html.Label("Categorías:", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id="category-filter",
-                                    options=[{"label": cat, "value": cat} for cat in categories],
-                                    value=[],  # Empty list for multi-select
-                                    multi=True,
-                                    placeholder="Selecciona categorías (vacío = todas)"
                                 )
                             ], width=12, lg=6),
                         ])
