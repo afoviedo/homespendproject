@@ -97,6 +97,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
         
         # Charts Row
         dbc.Row([
+            # Time series chart
             dbc.Col([
                 dbc.Card([
                     dbc.CardHeader([
@@ -112,7 +113,25 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                         )
                     ])
                 ])
-            ])
+            ], width=12, lg=6),
+            
+            # Category chart  
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-chart-bar me-2"),
+                            "📊 Gastos por Categoría"
+                        ], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dcc.Loading(
+                            dcc.Graph(id="category-chart"),
+                            type="default"
+                        )
+                    ])
+                ])
+            ], width=12, lg=6),
         ], className="mb-4"),
         
         # Tables Row
@@ -486,6 +505,83 @@ def update_time_series_chart(filtered_data, period):
 
 
 @callback(
+    Output("category-chart", "figure"),
+    Input("filtered-data-store", "data")
+)
+def update_category_chart(filtered_data):
+    """Update category chart based on filtered data"""
+    print(f"Category chart callback triggered")
+    
+    if not filtered_data or not filtered_data.get('filtered_data'):
+        print("No filtered data available for category chart")
+        return create_empty_chart("No hay datos disponibles para mostrar categorías")
+    
+    df = pd.DataFrame(filtered_data['filtered_data'])
+    print(f"Category chart data: {len(df)} records")
+    
+    if df.empty:
+        print("DataFrame is empty for category chart")
+        return create_empty_chart("No hay datos en el período seleccionado")
+    
+    try:
+        # Ensure required columns and data types
+        required_columns = ['Description', 'Amount']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            print(f"Missing required columns for category chart: {missing_columns}")
+            return create_empty_chart("Error: Columnas faltantes en los datos")
+        
+        df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+        df = df.dropna(subset=['Amount'])
+        
+        if df.empty:
+            print("No valid data after cleaning for category chart")
+            return create_empty_chart("No hay datos válidos para mostrar")
+        
+        # Use Description as category (Business column)
+        df_grouped = df.groupby('Description')['Amount'].sum().reset_index()
+        df_grouped = df_grouped.sort_values('Amount', ascending=True)  # Sort for better visualization
+        
+        print(f"Category grouped data: {len(df_grouped)} categories")
+        
+        if df_grouped.empty:
+            return create_empty_chart("No hay categorías para mostrar")
+        
+        # Create horizontal bar chart
+        fig = px.bar(
+            df_grouped, 
+            x='Amount', 
+            y='Description',
+            orientation='h',
+            title="Gastos por Categoría",
+            labels={'Amount': 'Monto (₡)', 'Description': 'Categoría'},
+            color='Amount',
+            color_continuous_scale='Blues'
+        )
+        
+        # Customize chart
+        fig.update_layout(
+            template="plotly_dark",
+            height=400,
+            xaxis_title="Monto (₡)",
+            yaxis_title="Categoría",
+            showlegend=False,
+            margin=dict(l=150, r=50, t=50, b=50),  # More left margin for category names
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)'
+        )
+        
+        # Format x-axis as currency
+        fig.update_xaxes(tickformat='₡,.0f')
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error creating category chart: {e}")
+        return create_empty_chart("Error al procesar datos de categorías")
+
+
+@callback(
     Output("last-transactions-table", "children"),
     Input("filtered-data-store", "data")
 )
@@ -605,20 +701,22 @@ def update_top_transactions_table(filtered_data):
     return table
 
 
-def create_empty_chart():
+def create_empty_chart(message="No hay datos disponibles para el período seleccionado"):
     """Create empty chart when no data is available"""
     fig = go.Figure()
     fig.add_annotation(
-        text="No hay datos disponibles para el período seleccionado",
+        text=message,
         xref="paper", yref="paper",
         x=0.5, y=0.5, xanchor='center', yanchor='middle',
         showarrow=False,
         font=dict(size=16, color="gray")
     )
     fig.update_layout(
-        template="plotly_white",
+        template="plotly_dark",
         height=400,
         xaxis=dict(showgrid=False, showticklabels=False),
-        yaxis=dict(showgrid=False, showticklabels=False)
+        yaxis=dict(showgrid=False, showticklabels=False),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
     )
     return fig

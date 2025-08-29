@@ -5,13 +5,29 @@
     transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
 }
 
-/* Dark mode chart backgrounds */
+/* Dark mode body and html */
+[data-bs-theme="dark"] body,
+[data-bs-theme="dark"] html {
+    background-color: #212529 !important;
+    color: #ffffff !important;
+}
+
+/* Dark mode chart backgrounds and plotly styling */
 [data-bs-theme="dark"] .js-plotly-plot {
     background-color: transparent !important;
 }
 
 [data-bs-theme="dark"] .plotly .modebar {
     background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Plotly chart paper and plot background */
+[data-bs-theme="dark"] .js-plotly-plot .plotly .main-svg {
+    background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] .js-plotly-plot .bg {
+    fill: transparent !important;
 }
 
 /* Dark mode loading spinner */
@@ -31,18 +47,64 @@
     border: 1px solid rgba(255, 255, 255, 0.125);
 }
 
-/* Dark mode form controls */
+/* Dark mode form controls and dropdowns */
 [data-bs-theme="dark"] .form-select,
 [data-bs-theme="dark"] .form-control {
-    background-color: var(--bs-dark);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
+    background-color: #495057 !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
 }
 
 [data-bs-theme="dark"] .form-select:focus,
 [data-bs-theme="dark"] .form-control:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+    background-color: #495057 !important;
+}
+
+/* Dash dropdown styling */
+[data-bs-theme="dark"] .Select-control {
+    background-color: #495057 !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .Select-menu-outer {
+    background-color: #495057 !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .Select-option {
+    background-color: #495057 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .Select-option:hover {
+    background-color: #6c757d !important;
+}
+
+[data-bs-theme="dark"] .Select-value-label {
+    color: #ffffff !important;
+}
+
+/* DatePickerRange styling */
+[data-bs-theme="dark"] .DateInput {
+    background-color: #495057 !important;
+}
+
+[data-bs-theme="dark"] .DateInput_input {
+    background-color: #495057 !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .DateRangePickerInput {
+    background-color: #495057 !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
+[data-bs-theme="dark"] .DateRangePickerInput_arrow {
+    color: #ffffff !important;
 }
 
 /* Theme toggle button animation */

@@ -178,7 +178,7 @@ app.layout = html.Div([
         # Global stores
         dcc.Store(id="global-data-store"),
         dcc.Store(id="user-store"),
-        dcc.Store(id="theme-store", data="light"),  # Default to light theme
+        dcc.Store(id="theme-store", data="dark"),  # Default to dark theme
         html.Div(id="theme-dummy", style={"display": "none"}),  # Dummy for theme callback
         
         # Global loading
