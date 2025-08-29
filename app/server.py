@@ -18,13 +18,13 @@ import pytz
 load_dotenv()
 
 # Import local modules
-from auth import init_auth, require_auth
-from graph import OneDriveManager
-from etl import HomeSpendETL
-from layout import layout
+from app.auth import init_auth, require_auth
+from app.graph import OneDriveManager
+from app.etl import HomeSpendETL
+from app.layout import layout
 
 # Import pages
-from pages import home, transactions, fixed, data
+from app.pages import home, transactions, fixed, data
 
 
 # Initialize Flask app
