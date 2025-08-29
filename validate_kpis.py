@@ -93,3 +93,4 @@ def validate_kpis_manually():
 
 if __name__ == "__main__":
     validate_kpis_manually()
+

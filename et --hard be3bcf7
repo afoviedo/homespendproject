@@ -1,0 +1,10 @@
+[33mcaf0f95[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m HOTFIX: Restore functionality - Remove broken callbacks
+[33mbed5584[m REVOLUTIONARY FIX: Static component architecture - NO MORE RECREATION
+[33m1f4e9ff[m FIX: DatePicker positioning + Navigation consistency + Component stability
+[33m29bea99[m CRITICAL FIX: DatePicker stuck in February + Missing data stores
+[33m657ace1[m FIX: Critical filter and functionality issues
+[33m7caaaec[m ENHANCE: Multiple UI/UX improvements and new features
+[33mbe3bcf7[m FIX: Dynamic chart colors + Multi-select responsible filter
+[33mebfeee3[m ENHANCE: Dark mode default + category chart + improved styling
+[33m10b2822[m FEATURE: Complete Dark Mode implementation with toggle
+[33md4bb3ea[m REMOVE: Complete elimination of fixed expenses injection logic
