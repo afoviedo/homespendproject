@@ -189,6 +189,9 @@ class HomeSpendETL:
         # Create first day of target month
         first_day = date(target_year, target_month, 1)
         
+        print(f"🔍 Fixed expenses injection check for {target_month}/{target_year}:")
+        print(f"   Input DataFrame size: {len(df)} records")
+        
         # Check if fixed expenses already exist for this month
         if not df.empty:
             df_month_data = df[
@@ -197,26 +200,33 @@ class HomeSpendETL:
                 (df['Responsible'] == 'Gastos Fijos')
             ]
             
-            # If fixed expenses already exist, don't inject again
+            print(f"   Existing fixed expenses found: {len(df_month_data)} records")
             if not df_month_data.empty:
+                print(f"   📋 Existing fixed expenses: {df_month_data['Description'].tolist()}")
+                print(f"   📋 Amounts: {df_month_data['Amount'].tolist()}")
+                print(f"   ⚠️  SKIPPING injection - fixed expenses already exist")
                 return df
         
         # Create fixed expenses rows
+        print(f"   ✅ INJECTING fixed expenses for {target_month}/{target_year}")
         fixed_rows = []
         for expense in self.fixed_expenses:
             fixed_row = expense.copy()
             fixed_row['Date'] = pd.Timestamp(first_day)  # Convert to Timestamp for consistency
             fixed_rows.append(fixed_row)
+            print(f"   💰 Adding: {expense['Description']} - ₡{expense['Amount']:,.0f}")
         
         # Convert to DataFrame and combine
         fixed_df = pd.DataFrame(fixed_rows)
         
         if df.empty:
+            print(f"   📊 Returning only fixed expenses: {len(fixed_df)} records")
             return fixed_df
         else:
             combined_df = pd.concat([df, fixed_df], ignore_index=True)
             # Sort by date
             combined_df = combined_df.sort_values('Date').reset_index(drop=True)
+            print(f"   📊 Combined DataFrame: {len(df)} original + {len(fixed_df)} fixed = {len(combined_df)} total")
             return combined_df
     
     def process_data(self, raw_df: pd.DataFrame, inject_fixed: bool = True) -> pd.DataFrame:
@@ -295,7 +305,13 @@ class HomeSpendETL:
         
         # Log calculation details for validation
         print(f"📊 KPI Calculation Details:")
+        print(f"   Total DataFrame size: {len(df)} records")
         print(f"   Current Month ({now.month}/{now.year}): {len(current_month_data)} transactions, ₡{current_total:,.0f}")
+        if len(current_month_data) > 0:
+            fixed_in_current = current_month_data[current_month_data['Responsible'] == 'Gastos Fijos']
+            regular_in_current = current_month_data[current_month_data['Responsible'] != 'Gastos Fijos']
+            print(f"   └── Fixed expenses: {len(fixed_in_current)} records, ₡{fixed_in_current['Amount'].sum():,.0f}")
+            print(f"   └── Regular transactions: {len(regular_in_current)} records, ₡{regular_in_current['Amount'].sum():,.0f}")
         print(f"   Previous Month ({prev_month}/{prev_year}): {len(prev_month_data)} transactions, ₡{prev_total:,.0f}")
         print(f"   Month Delta: {month_delta:.1f}%")
         print(f"   Average Ticket: ₡{avg_ticket:,.0f}")
