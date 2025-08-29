@@ -181,7 +181,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-trophy me-2"),
-                            "Top 5 Transacciones Más Altas"
+                            "Top 10 Transacciones Más Altas"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
@@ -283,6 +283,9 @@ def update_kpi_cards(filtered_data):
         total_transactions = len(df)
         avg_amount = total_amount / total_transactions if total_transactions > 0 else 0
         
+        # Calculate month performance
+        performance, performance_desc = calculate_month_performance(df)
+        
         # Create updated cards
         cards = [
             dbc.Col([
@@ -314,10 +317,10 @@ def update_kpi_cards(filtered_data):
             ], width=12, lg=3),
             dbc.Col([
                 create_kpi_card(
-                    "Período Filtrado",
-                    f"{filtered_data.get('start_date', 'N/A')} - {filtered_data.get('end_date', 'N/A')}",
-                    None,
-                    "fas fa-calendar",
+                    "Rendimiento Mensual",
+                    f"{performance:+.1f}%",
+                    performance,
+                    "fas fa-chart-line",
                     "warning"
                 )
             ], width=12, lg=3),
@@ -827,9 +830,9 @@ def update_top_transactions_table(filtered_data):
         if df.empty:
             return html.P("No hay transacciones válidas en el período seleccionado", className="text-muted text-center")
         
-        # Get top 5 highest transactions
-        df_top = df.nlargest(5, 'Amount')
-        print(f"Top 5 transactions found: {len(df_top)} records")
+        # Get top 10 highest transactions
+        df_top = df.nlargest(10, 'Amount')
+        print(f"Top 10 transactions found: {len(df_top)} records")
         print(f"Top transaction amount: {df_top['Amount'].max() if not df_top.empty else 'N/A'}")
         print(f"Date range in top transactions: {df_top['Date'].min()} to {df_top['Date'].max() if not df_top.empty else 'N/A'}")
         
@@ -844,7 +847,7 @@ def update_top_transactions_table(filtered_data):
     
     # Create table with header showing filtered info
     table_header = html.Div([
-        html.Small(f"Mostrando top 5 de {len(df)} transacciones filtradas", 
+        html.Small(f"Mostrando top 10 de {len(df)} transacciones filtradas", 
                   className="text-muted mb-2 d-block"),
         dbc.Table.from_dataframe(
             df_display[['Date', 'Description', 'Amount', 'Responsible']],
@@ -857,6 +860,73 @@ def update_top_transactions_table(filtered_data):
     ])
     
     return table_header
+
+
+def calculate_month_performance(df):
+    """Calculate month-to-month performance based on filtered data"""
+    if df.empty:
+        return 0.0, "N/A"
+    
+    try:
+        # Convert dates and ensure they are datetime
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df = df.dropna(subset=['Date'])
+        
+        if df.empty:
+            return 0.0, "N/A"
+        
+        # Get the date range from filtered data
+        min_date = df['Date'].min()
+        max_date = df['Date'].max()
+        
+        # Determine the month and year of the end date
+        end_month = max_date.month
+        end_year = max_date.year
+        
+        # Calculate current month data (from start of month to max_date)
+        current_month_start = pd.Timestamp(end_year, end_month, 1)
+        current_month_data = df[df['Date'] >= current_month_start]
+        current_month_total = current_month_data['Amount'].sum()
+        
+        # Calculate previous month data
+        if end_month == 1:
+            prev_month = 12
+            prev_year = end_year - 1
+        else:
+            prev_month = end_month - 1
+            prev_year = end_year
+            
+        prev_month_start = pd.Timestamp(prev_year, prev_month, 1)
+        prev_month_end = pd.Timestamp(end_year, end_month, 1) - pd.Timedelta(days=1)
+        prev_month_data = df[(df['Date'] >= prev_month_start) & (df['Date'] <= prev_month_end)]
+        prev_month_total = prev_month_data['Amount'].sum()
+        
+        # Calculate performance
+        if prev_month_total > 0:
+            performance = ((current_month_total - prev_month_total) / prev_month_total) * 100
+        elif prev_month_total == 0 and current_month_total > 0:
+            performance = 100.0  # If previous was 0 and current > 0, it's 100% increase
+        elif prev_month_total == 0 and current_month_total == 0:
+            performance = 0.0    # If both are 0, no change
+        else:
+            performance = -100.0  # If previous > 0 and current = 0, it's 100% decrease
+        
+        # Create description
+        current_month_name = max_date.strftime('%B %Y')
+        prev_month_name = prev_month_end.strftime('%B %Y')
+        
+        if current_month_start.date() == min_date.date():
+            # If filter starts from beginning of current month
+            description = f"vs {prev_month_name}"
+        else:
+            # If filter starts mid-month
+            description = f"MTD vs {prev_month_name}"
+        
+        return performance, description
+        
+    except Exception as e:
+        print(f"Error calculating month performance: {e}")
+        return 0.0, "Error"
 
 
 def create_empty_chart(message="No hay datos disponibles para el período seleccionado", theme="dark"):
