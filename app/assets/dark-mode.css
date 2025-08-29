@@ -1,0 +1,70 @@
+/* Dark Mode Custom Styles for HomeSpend */
+
+/* Smooth transitions for theme changes */
+* {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}
+
+/* Dark mode chart backgrounds */
+[data-bs-theme="dark"] .js-plotly-plot {
+    background-color: transparent !important;
+}
+
+[data-bs-theme="dark"] .plotly .modebar {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Dark mode loading spinner */
+[data-bs-theme="dark"] ._dash-loading {
+    color: #ffffff !important;
+}
+
+/* Dark mode table styling */
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: var(--bs-dark);
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.05);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.075);
+}
+
+/* Dark mode card enhancements */
+[data-bs-theme="dark"] .card {
+    border: 1px solid rgba(255, 255, 255, 0.125);
+}
+
+/* Dark mode form controls */
+[data-bs-theme="dark"] .form-select,
+[data-bs-theme="dark"] .form-control {
+    background-color: var(--bs-dark);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+}
+
+[data-bs-theme="dark"] .form-select:focus,
+[data-bs-theme="dark"] .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Theme toggle button animation */
+#theme-toggle {
+    transition: transform 0.3s ease !important;
+}
+
+#theme-toggle:hover {
+    transform: scale(1.1);
+}
+
+/* Enhanced KPI cards for dark mode */
+[data-bs-theme="dark"] .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(255, 255, 255, 0.075) !important;
+}
+
+/* Better contrast for text in dark mode */
+[data-bs-theme="dark"] .text-muted {
+    color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Enhanced navbar in dark mode */
+[data-bs-theme="dark"] .navbar-dark {
+    background-color: #212529 !important;
+}

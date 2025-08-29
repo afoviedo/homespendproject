@@ -31,7 +31,7 @@ from pages import home, transactions, fixed, data
 server = Flask(__name__)
 server.secret_key = os.getenv('FLASK_SECRET_KEY', 'dev-secret-key')
 
-# Initialize Dash app
+# Initialize Dash app with theme support
 app = dash.Dash(
     __name__,
     server=server,
@@ -42,6 +42,22 @@ app = dash.Dash(
         {"name": "description", "content": "HomeSpend - Dashboard financiero personal"}
     ]
 )
+
+# Theme configuration
+THEMES = {
+    'light': {
+        'name': 'Light Mode',
+        'icon': 'fas fa-sun',
+        'bootstrap': dbc.themes.LUX,
+        'color': 'light'
+    },
+    'dark': {
+        'name': 'Dark Mode', 
+        'icon': 'fas fa-moon',
+        'bootstrap': dbc.themes.DARKLY,
+        'color': 'dark'
+    }
+}
 
 app.title = "HomeSpend - Dashboard Financiero"
 
@@ -135,46 +151,82 @@ def refresh_data_from_onedrive():
 
 
 # App layout
-app.layout = dbc.Container([
-    dcc.Location(id="url", refresh=False),
+app.layout = html.Div([
+    # Theme stylesheet (will be updated dynamically)
+    html.Link(id="theme-stylesheet", rel="stylesheet"),
     
-    # Navbar
-    html.Div(id="navbar-container"),
-    
-    # Sidebar
-    html.Div(id="sidebar-container"),
-    
-    # Main content area
-    dbc.Row([
-        dbc.Col([
-            # Sidebar toggle button
-            html.Div(id="sidebar-toggle-container", className="mb-3"),
-            
-            # Page content
-            html.Div(id="page-content")
-        ], width=12)
-    ]),
-    
-    # Global stores
-    dcc.Store(id="global-data-store"),
-    dcc.Store(id="user-store"),
-    
-    # Global loading
-    dcc.Loading(
-        id="global-loading",
-        type="dot",
-        children=html.Div(id="global-loading-output")
-    ),
-    
-    # Global interval for data refresh
-    dcc.Interval(
-        id="global-refresh-interval",
-        interval=300000,  # 5 minutes
-        n_intervals=0,
-        disabled=True
-    ),
-    
-], fluid=True)
+    dbc.Container([
+        dcc.Location(id="url", refresh=False),
+        
+        # Navbar
+        html.Div(id="navbar-container"),
+        
+        # Sidebar
+        html.Div(id="sidebar-container"),
+        
+        # Main content area
+        dbc.Row([
+            dbc.Col([
+                # Sidebar toggle button
+                html.Div(id="sidebar-toggle-container", className="mb-3"),
+                
+                # Page content
+                html.Div(id="page-content")
+            ], width=12)
+        ]),
+        
+        # Global stores
+        dcc.Store(id="global-data-store"),
+        dcc.Store(id="user-store"),
+        dcc.Store(id="theme-store", data="light"),  # Default to light theme
+        html.Div(id="theme-dummy", style={"display": "none"}),  # Dummy for theme callback
+        
+        # Global loading
+        dcc.Loading(
+            id="global-loading",
+            type="dot",
+            children=html.Div(id="global-loading-output")
+        ),
+        
+        # Global interval for data refresh
+        dcc.Interval(
+            id="global-refresh-interval",
+            interval=300000,  # 5 minutes
+            n_intervals=0,
+            disabled=True
+        ),
+        
+    ], fluid=True)
+])
+
+
+# Theme callback
+@callback(
+    Output("theme-stylesheet", "href"),
+    Input("theme-store", "data")
+)
+def update_theme_stylesheet(theme):
+    """Update the theme stylesheet"""
+    if theme in THEMES:
+        return THEMES[theme]['bootstrap']
+    return THEMES['light']['bootstrap']
+
+
+# Client-side callback to update body theme attribute
+app.clientside_callback(
+    """
+    function(theme) {
+        if (theme) {
+            document.body.setAttribute('data-bs-theme', theme);
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        }
+        return "";
+    }
+    """,
+    Output("theme-dummy", "children"),
+    Input("theme-store", "data"),
+    prevent_initial_call=True
+)
 
 
 @callback(
@@ -182,10 +234,11 @@ app.layout = dbc.Container([
      Output("sidebar-container", "children"),
      Output("sidebar-toggle-container", "children"),
      Output("user-store", "data")],
-    [Input("url", "pathname")]
+    [Input("url", "pathname"),
+     Input("theme-store", "data")]
 )
-def update_layout_components(pathname):
-    """Update layout components based on authentication"""
+def update_layout_components(pathname, theme):
+    """Update layout components based on authentication and theme"""
     
     if not auth.is_authenticated():
         return html.Div(), html.Div(), html.Div(), {}
@@ -193,12 +246,26 @@ def update_layout_components(pathname):
     user_name = get_user_display_name()
     user_data = auth.get_user_info()
     
-    # Create layout components
-    navbar = layout.create_navbar(user_name)
+    # Create layout components with theme
+    navbar = layout.create_navbar(user_name, theme)
     sidebar = layout.create_sidebar()
     sidebar_toggle = layout.create_sidebar_toggle()
     
     return navbar, sidebar, sidebar_toggle, user_data
+
+
+# Theme toggle callback
+@callback(
+    Output("theme-store", "data"),
+    Input("theme-toggle", "n_clicks"),
+    State("theme-store", "data"),
+    prevent_initial_call=True
+)
+def toggle_theme(n_clicks, current_theme):
+    """Toggle between light and dark theme"""
+    if n_clicks:
+        return "dark" if current_theme == "light" else "light"
+    return current_theme
 
 
 @callback(

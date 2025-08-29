@@ -20,10 +20,26 @@ class PremiumLayout:
         self.warning_color = "#ffc107"
         self.info_color = "#17a2b8"
         
-    def create_navbar(self, user_name: str = "Usuario") -> dbc.NavbarSimple:
-        """Create premium navbar with logo and logout"""
+    def create_navbar(self, user_name: str = "Usuario", theme: str = "light") -> dbc.NavbarSimple:
+        """Create premium navbar with logo, theme toggle and logout"""
+        
+        # Theme toggle button
+        theme_icon = "fas fa-moon" if theme == "light" else "fas fa-sun"
+        theme_tooltip = "Cambiar a modo oscuro" if theme == "light" else "Cambiar a modo claro"
+        
         return dbc.NavbarSimple(
             children=[
+                # Theme toggle button
+                dbc.Button(
+                    html.I(className=theme_icon),
+                    id="theme-toggle",
+                    color="outline-light",
+                    size="sm",
+                    className="me-3",
+                    title=theme_tooltip
+                ),
+                
+                # User dropdown
                 dbc.DropdownMenu(
                     children=[
                         dbc.DropdownMenuItem("Perfil", header=True),
