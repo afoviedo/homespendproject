@@ -263,34 +263,52 @@ def filter_data(start_date, end_date, responsible, data):
     
     if not data or not data.get('processed_data'):
         print("No data available for filtering")
-        return {}
+        return {'filtered_data': []}
     
-    df = pd.DataFrame(data['processed_data'])
-    print(f"Original data: {len(df)} records")
-    
-    # Convert dates
-    df['Date'] = pd.to_datetime(df['Date'])
-    if start_date:
-        df = df[df['Date'] >= pd.to_datetime(start_date)]
-        print(f"After start date filter: {len(df)} records")
-    if end_date:
-        df = df[df['Date'] <= pd.to_datetime(end_date)]
-        print(f"After end date filter: {len(df)} records")
-    
-    # Filter by responsible
-    if responsible and responsible != "Todos":
-        df = df[df['Responsible'] == responsible]
-        print(f"After responsible filter: {len(df)} records")
-    
-    result = {
-        'filtered_data': df.to_dict('records'),
-        'start_date': start_date,
-        'end_date': end_date,
-        'responsible': responsible
-    }
-    
-    print(f"Returning filtered data: {len(result['filtered_data'])} records")
-    return result
+    try:
+        df = pd.DataFrame(data['processed_data'])
+        print(f"Original data: {len(df)} records")
+        
+        if df.empty:
+            print("DataFrame is empty")
+            return {'filtered_data': []}
+        
+        # Verify required columns exist
+        required_columns = ['Date', 'Amount', 'Responsible']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            print(f"Missing required columns: {missing_columns}")
+            return {'filtered_data': []}
+        
+        # Convert dates
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df = df.dropna(subset=['Date'])  # Remove rows with invalid dates
+        
+        if start_date:
+            df = df[df['Date'] >= pd.to_datetime(start_date)]
+            print(f"After start date filter: {len(df)} records")
+        if end_date:
+            df = df[df['Date'] <= pd.to_datetime(end_date)]
+            print(f"After end date filter: {len(df)} records")
+        
+        # Filter by responsible
+        if responsible and responsible != "Todos":
+            df = df[df['Responsible'] == responsible]
+            print(f"After responsible filter: {len(df)} records")
+        
+        result = {
+            'filtered_data': df.to_dict('records'),
+            'start_date': start_date,
+            'end_date': end_date,
+            'responsible': responsible
+        }
+        
+        print(f"Returning filtered data: {len(result['filtered_data'])} records")
+        return result
+        
+    except Exception as e:
+        print(f"Error in filter_data: {e}")
+        return {'filtered_data': []}
 
 
 @callback(
@@ -314,7 +332,22 @@ def update_time_series_chart(filtered_data, period):
         print("DataFrame is empty")
         return create_empty_chart()
     
-    df['Date'] = pd.to_datetime(df['Date'])
+    # Ensure required columns and data types
+    required_columns = ['Date', 'Amount']
+    missing_columns = [col for col in required_columns if col not in df.columns]
+    if missing_columns:
+        print(f"Missing required columns for chart: {missing_columns}")
+        return create_empty_chart()
+    
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+    
+    # Remove rows with invalid data
+    df = df.dropna(subset=['Date', 'Amount'])
+    
+    if df.empty:
+        print("No valid data after cleaning")
+        return create_empty_chart()
     
     # Group by period
     try:
@@ -362,11 +395,9 @@ def update_time_series_chart(filtered_data, period):
             height=400,
             xaxis_title=x_title,
             yaxis_title="Monto (₡)",
-            hovermode='x unified'
+            hovermode='x unified',
+            yaxis=dict(tickformat='₡,.0f')
         )
-        
-        # Format y-axis as currency
-        fig.update_yaxis(tickformat='₡,.0f')
         
         return fig
         
@@ -393,15 +424,34 @@ def update_last_transactions_table(filtered_data):
     if df.empty:
         return html.P("No hay transacciones en el período seleccionado", className="text-muted text-center")
     
-    df['Date'] = pd.to_datetime(df['Date'])
-    
-    # Get last 10 transactions
-    df_last = df.nlargest(10, 'Date')
-    
-    # Format the data for display
-    df_display = df_last.copy()
-    df_display['Date'] = df_display['Date'].dt.strftime('%d/%m/%Y')
-    df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+    try:
+        # Verify required columns
+        required_columns = ['Date', 'Description', 'Amount', 'Responsible']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            print(f"Missing columns for last transactions: {missing_columns}")
+            return html.P("Error: Columnas faltantes en los datos", className="text-muted text-center")
+        
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+        
+        # Remove rows with invalid data
+        df = df.dropna(subset=['Date', 'Amount'])
+        
+        if df.empty:
+            return html.P("No hay transacciones válidas en el período seleccionado", className="text-muted text-center")
+        
+        # Get last 10 transactions
+        df_last = df.nlargest(10, 'Date')
+        
+        # Format the data for display
+        df_display = df_last.copy()
+        df_display['Date'] = df_display['Date'].dt.strftime('%d/%m/%Y')
+        df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+        
+    except Exception as e:
+        print(f"Error formatting last transactions: {e}")
+        return html.P("Error al procesar las transacciones", className="text-muted text-center")
     
     # Create table
     table = dbc.Table.from_dataframe(
@@ -434,13 +484,34 @@ def update_top_transactions_table(filtered_data):
     if df.empty:
         return html.P("No hay transacciones en el período seleccionado", className="text-muted text-center")
     
-    # Get top 5 highest transactions
-    df_top = df.nlargest(5, 'Amount')
-    
-    # Format the data for display
-    df_display = df_top.copy()
-    df_display['Date'] = pd.to_datetime(df_display['Date']).dt.strftime('%d/%m/%Y')
-    df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+    try:
+        # Verify required columns
+        required_columns = ['Date', 'Description', 'Amount', 'Responsible']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            print(f"Missing columns for top transactions: {missing_columns}")
+            return html.P("Error: Columnas faltantes en los datos", className="text-muted text-center")
+        
+        df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+        df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+        
+        # Remove rows with invalid data
+        df = df.dropna(subset=['Date', 'Amount'])
+        
+        if df.empty:
+            return html.P("No hay transacciones válidas en el período seleccionado", className="text-muted text-center")
+        
+        # Get top 5 highest transactions
+        df_top = df.nlargest(5, 'Amount')
+        
+        # Format the data for display
+        df_display = df_top.copy()
+        df_display['Date'] = df_display['Date'].dt.strftime('%d/%m/%Y')
+        df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+        
+    except Exception as e:
+        print(f"Error formatting top transactions: {e}")
+        return html.P("Error al procesar las transacciones", className="text-muted text-center")
     
     # Create table
     table = dbc.Table.from_dataframe(
