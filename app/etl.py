@@ -264,7 +264,15 @@ class HomeSpendETL:
         current_total = current_month_data['Amount'].sum()
         prev_total = prev_month_data['Amount'].sum()
         
-        month_delta = ((current_total - prev_total) / prev_total * 100) if prev_total > 0 else 0
+        # Calculate month delta with proper handling of edge cases
+        if prev_total > 0:
+            month_delta = ((current_total - prev_total) / prev_total * 100)
+        elif prev_total == 0 and current_total > 0:
+            month_delta = 100.0  # If previous was 0 and current > 0, it's 100% increase
+        elif prev_total == 0 and current_total == 0:
+            month_delta = 0.0    # If both are 0, no change
+        else:
+            month_delta = -100.0  # If previous > 0 and current = 0, it's 100% decrease
         
         # Top merchants (descriptions)
         top_merchants = (
@@ -282,10 +290,20 @@ class HomeSpendETL:
             .to_dict()
         )
         
+        # Calculate average ticket
+        avg_ticket = current_total / len(current_month_data) if len(current_month_data) > 0 else 0
+        
+        # Log calculation details for validation
+        print(f"📊 KPI Calculation Details:")
+        print(f"   Current Month ({now.month}/{now.year}): {len(current_month_data)} transactions, ₡{current_total:,.0f}")
+        print(f"   Previous Month ({prev_month}/{prev_year}): {len(prev_month_data)} transactions, ₡{prev_total:,.0f}")
+        print(f"   Month Delta: {month_delta:.1f}%")
+        print(f"   Average Ticket: ₡{avg_ticket:,.0f}")
+        
         return {
             'total_amount': current_total,
             'transaction_count': len(current_month_data),
-            'average_ticket': current_total / len(current_month_data) if len(current_month_data) > 0 else 0,
+            'average_ticket': avg_ticket,
             'month_delta': month_delta,
             'top_merchants': list(top_merchants.items()),
             'spending_by_responsible': spending_by_responsible

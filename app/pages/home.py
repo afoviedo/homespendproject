@@ -69,7 +69,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
             dbc.Col([
                 create_kpi_card(
                     "vs Mes Anterior",
-                    f"+{kpis.get('vs_previous_month', 0):.1f}%",
+                    f"{kpis.get('vs_previous_month', 0):+.1f}%",
                     kpis.get('vs_previous_month', 0),
                     "fas fa-chart-line",
                     "warning"
