@@ -426,7 +426,7 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
             current_end = None
         
         start_date = current_start if current_start and extended_min_date <= current_start <= extended_max_date else min_date
-        end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date + timedelta(days=1)
+        end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date
         responsible = current_responsible if current_responsible else []
         period = current_period if current_period else "monthly"
         
@@ -496,6 +496,8 @@ def filter_data(start_date, end_date, responsible, data):
         if end_date:
             try:
                 end_dt = pd.to_datetime(end_date)
+                # Include the entire end date by setting time to end of day
+                end_dt = end_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
                 df = df[df['Date'] <= end_dt]
                 print(f"After end date filter ({end_date}): {len(df)} records")
             except Exception as e:
