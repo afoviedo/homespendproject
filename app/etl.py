@@ -231,15 +231,21 @@ class HomeSpendETL:
     
     def process_data(self, raw_df: pd.DataFrame, inject_fixed: bool = True) -> pd.DataFrame:
         """Complete ETL pipeline"""
+        print(f"🔄 ETL Processing Pipeline:")
+        print(f"   Input raw data: {len(raw_df)} records")
+        
         # Step 1: Clean data
         cleaned_df = self.clean_data(raw_df)
+        print(f"   After cleaning: {len(cleaned_df)} records")
         
         # Step 2: Apply responsible rules
         processed_df = self.apply_responsible_rules(cleaned_df)
+        print(f"   After responsible rules: {len(processed_df)} records")
         
         # Step 3: Inject fixed expenses if requested
         if inject_fixed:
             processed_df = self.inject_fixed_expenses(processed_df)
+            print(f"   After fixed injection: {len(processed_df)} records")
         
         return processed_df
     

@@ -37,45 +37,8 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
             ])
         ], className="mb-4"),
         
-        # KPI Cards (existing)
-        dbc.Row([
-            dbc.Col([
-                create_kpi_card(
-                    "Gasto Total (Mes Actual)",
-                    f"₡{kpis.get('total_amount', 0):,.0f}",
-                    kpis.get('vs_previous_month', 0),
-                    "fas fa-wallet",
-                    "primary"
-                )
-            ], width=12, lg=3),
-            dbc.Col([
-                create_kpi_card(
-                    "# Transacciones", 
-                    f"{kpis.get('total_transactions', 0)}",
-                    None,
-                    "fas fa-list",
-                    "info"
-                )
-            ], width=12, lg=3),
-            dbc.Col([
-                create_kpi_card(
-                    "Ticket Promedio",
-                    f"₡{kpis.get('avg_amount', 0):,.0f}",
-                    None,
-                    "fas fa-receipt",
-                    "success"
-                )
-            ], width=12, lg=3),
-            dbc.Col([
-                create_kpi_card(
-                    "vs Mes Anterior",
-                    f"{kpis.get('vs_previous_month', 0):+.1f}%",
-                    kpis.get('vs_previous_month', 0),
-                    "fas fa-chart-line",
-                    "warning"
-                )
-            ], width=12, lg=3),
-        ], className="mb-4"),
+        # KPI Cards (dynamic - will update with filters)
+        dbc.Row(id="kpi-cards-row", className="mb-4"),
         
         # Filters Row
         dbc.Row([
@@ -250,6 +213,122 @@ def create_kpi_card(title: str, value: str, delta: float = None,
 
 
 # Callbacks for the home page
+@callback(
+    Output("kpi-cards-row", "children"),
+    Input("filtered-data-store", "data")
+)
+def update_kpi_cards(filtered_data):
+    """Update KPI cards based on filtered data"""
+    print(f"KPI cards callback triggered")
+    
+    if not filtered_data or not filtered_data.get('filtered_data'):
+        print("No filtered data for KPI cards")
+        return create_default_kpi_cards()
+    
+    try:
+        df = pd.DataFrame(filtered_data['filtered_data'])
+        print(f"KPI cards data: {len(df)} records")
+        
+        if df.empty:
+            return create_default_kpi_cards()
+        
+        # Calculate filtered KPIs
+        df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
+        df = df.dropna(subset=['Amount'])
+        
+        total_amount = df['Amount'].sum()
+        total_transactions = len(df)
+        avg_amount = total_amount / total_transactions if total_transactions > 0 else 0
+        
+        # Create updated cards
+        cards = [
+            dbc.Col([
+                create_kpi_card(
+                    "Gasto Total (Filtrado)",
+                    f"₡{total_amount:,.0f}",
+                    None,
+                    "fas fa-wallet",
+                    "primary"
+                )
+            ], width=12, lg=3),
+            dbc.Col([
+                create_kpi_card(
+                    "# Transacciones", 
+                    f"{total_transactions}",
+                    None,
+                    "fas fa-list",
+                    "info"
+                )
+            ], width=12, lg=3),
+            dbc.Col([
+                create_kpi_card(
+                    "Ticket Promedio",
+                    f"₡{avg_amount:,.0f}",
+                    None,
+                    "fas fa-receipt",
+                    "success"
+                )
+            ], width=12, lg=3),
+            dbc.Col([
+                create_kpi_card(
+                    "Período Filtrado",
+                    f"{filtered_data.get('start_date', 'N/A')} - {filtered_data.get('end_date', 'N/A')}",
+                    None,
+                    "fas fa-calendar",
+                    "warning"
+                )
+            ], width=12, lg=3),
+        ]
+        
+        return cards
+        
+    except Exception as e:
+        print(f"Error updating KPI cards: {e}")
+        return create_default_kpi_cards()
+
+
+def create_default_kpi_cards():
+    """Create default KPI cards when no data is available"""
+    return [
+        dbc.Col([
+            create_kpi_card(
+                "Gasto Total",
+                "₡0",
+                None,
+                "fas fa-wallet",
+                "primary"
+            )
+        ], width=12, lg=3),
+        dbc.Col([
+            create_kpi_card(
+                "# Transacciones", 
+                "0",
+                None,
+                "fas fa-list",
+                "info"
+            )
+        ], width=12, lg=3),
+        dbc.Col([
+            create_kpi_card(
+                "Ticket Promedio",
+                "₡0",
+                None,
+                "fas fa-receipt",
+                "success"
+            )
+        ], width=12, lg=3),
+        dbc.Col([
+            create_kpi_card(
+                "Sin Filtros",
+                "Selecciona filtros",
+                None,
+                "fas fa-filter",
+                "warning"
+            )
+        ], width=12, lg=3),
+    ]
+
+
 @callback(
     Output("filtered-data-store", "data"),
     [Input("date-range-picker", "start_date"),
@@ -456,10 +535,10 @@ def update_last_transactions_table(filtered_data):
     # Create table
     table = dbc.Table.from_dataframe(
         df_display[['Date', 'Description', 'Amount', 'Responsible', 'Card']],
-        striped=True,
-        bordered=True,
-        hover=True,
-        responsive=True,
+            striped=True,
+            bordered=True,
+            hover=True,
+            responsive=True,
         size='sm'
     )
     
