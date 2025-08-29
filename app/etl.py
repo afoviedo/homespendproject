@@ -191,6 +191,14 @@ class HomeSpendETL:
         
         print(f"🔍 Fixed expenses injection check for {target_month}/{target_year}:")
         print(f"   Input DataFrame size: {len(df)} records")
+        if not df.empty:
+            print(f"   DataFrame columns: {df.columns.tolist()}")
+            print(f"   Sample data types: {df.dtypes.to_dict()}")
+            if 'Responsible' in df.columns:
+                unique_responsibles = df['Responsible'].unique()
+                print(f"   Unique responsibles: {unique_responsibles}")
+            else:
+                print(f"   ⚠️  'Responsible' column NOT found!")
         
         # Check if fixed expenses already exist for this month
         if not df.empty:
@@ -244,8 +252,11 @@ class HomeSpendETL:
         
         # Step 3: Inject fixed expenses if requested
         if inject_fixed:
+            print(f"   💉 CALLING inject_fixed_expenses...")
             processed_df = self.inject_fixed_expenses(processed_df)
             print(f"   After fixed injection: {len(processed_df)} records")
+        else:
+            print(f"   ⚠️  Fixed injection SKIPPED (inject_fixed=False)")
         
         return processed_df
     

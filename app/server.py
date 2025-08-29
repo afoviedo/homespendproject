@@ -329,7 +329,8 @@ def refresh_global_data(pathname, interval_count, current_data):
         print(f"Successfully loaded {len(df)} transactions from OneDrive")
         
         # Process data
-        processed_df = etl.process_data(df)
+        print(f"🔄 About to process data with fixed expenses injection...")
+        processed_df = etl.process_data(df, inject_fixed=True)
         
         # Calculate KPIs
         kpis = etl.calculate_kpis(processed_df)
