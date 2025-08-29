@@ -283,15 +283,56 @@ def refresh_global_data(pathname, interval_count, current_data):
     """Refresh global data from OneDrive"""
     
     if not auth.is_authenticated():
-        return {}, html.Div()
+        print("User not authenticated, returning sample data")
+        return create_sample_data(), html.Div()
     
-    # Return empty data for now to avoid timeout
-    # OneDrive integration will be implemented later
-    return {
-        'raw_data': [],
-        'processed_data': [],
-        'last_refresh': None
-    }, html.Div()
+    try:
+        # Get access token from auth system
+        access_token = auth.get_access_token()
+        if not access_token:
+            print("No access token available, returning sample data")
+            return create_sample_data(), html.Div()
+        
+        print(f"User authenticated, attempting OneDrive connection...")
+        
+        # Initialize OneDrive manager and ETL with token
+        onedrive = OneDriveManager(access_token)
+        etl = HomeSpendETL()
+        
+        # Get file from OneDrive
+        file_path = os.getenv('ONEDRIVE_FILE_PATH', '/Casa/HomeSpend.xlsx')
+        file_name = os.getenv('ONEDRIVE_FILE_NAME', 'HomeSpend.xlsx')
+        
+        print(f"Attempting to load OneDrive file: {file_path}")
+        
+        # Download file
+        excel_data = onedrive.download_file(file_path)
+        if not excel_data:
+            print(f"Could not download file from {file_path}")
+            return create_sample_data(), html.Div()
+        
+        print(f"Successfully downloaded file, processing data...")
+        
+        # Process data
+        df = etl.load_data(excel_data)
+        processed_df = etl.process_data(df)
+        
+        # Calculate KPIs
+        kpis = etl.calculate_kpis(processed_df)
+        
+        print(f"Data processed successfully - {len(processed_df)} transactions, Total: ₡{kpis.get('total_amount', 0):,.0f}")
+        
+        # Return processed data
+        return {
+            'raw_data': df.to_dict('records') if not df.empty else [],
+            'processed_data': processed_df.to_dict('records') if not processed_df.empty else [],
+            'kpis': kpis,
+            'last_refresh': datetime.now().isoformat()
+        }, html.Div()
+        
+    except Exception as e:
+        print(f"Error loading data: {e}")
+        return create_sample_data(), html.Div()
 
 
 # Sidebar toggle callback
