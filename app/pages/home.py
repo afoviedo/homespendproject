@@ -21,9 +21,13 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
     # Get unique responsibles for filter
     responsibles = ["Todos"] + sorted(df['Responsible'].unique().tolist())
     
-    # Calculate date range
+    # Calculate date range with extended limits
     min_date = pd.to_datetime(df['Date']).min().date()
     max_date = pd.to_datetime(df['Date']).max().date()
+    
+    # Extend the range to allow more navigation
+    extended_min_date = min_date - timedelta(days=365)  # 1 year before
+    extended_max_date = max_date + timedelta(days=365)  # 1 year after
     
     layout = dbc.Container([
         # Header
@@ -61,10 +65,13 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     end_date=max_date,
                                     display_format='DD/MM/YYYY',
                                     style={'width': '100%'},
-                                    min_date_allowed=min_date,
-                                    max_date_allowed=max_date,
+                                    min_date_allowed=extended_min_date,
+                                    max_date_allowed=extended_max_date,
                                     clearable=True,
-                                    updatemode='bothdates'
+                                    updatemode='bothdates',
+                                    calendar_orientation='horizontal',
+                                    with_portal=True,
+                                    reopen_calendar_on_clear=True
                                 )
                             ], width=12, lg=4),
                             
@@ -384,17 +391,41 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
         min_date = df['Date'].min().date()
         max_date = df['Date'].max().date()
         
+        # Ensure we have valid dates
+        if not min_date or not max_date:
+            # Fallback to current month if dates are invalid
+            today = datetime.now().date()
+            min_date = today.replace(day=1)
+            max_date = today
+        
+        # Extend the range to allow more navigation
+        extended_min_date = min_date - timedelta(days=365)  # 1 year before
+        extended_max_date = max_date + timedelta(days=365)  # 1 year after
+        
         # Maintain current values if they exist and are valid
-        start_date = current_start if current_start else min_date
-        end_date = current_end if current_end else max_date
+        # Convert string dates to date objects if needed
+        try:
+            if current_start and isinstance(current_start, str):
+                current_start = pd.to_datetime(current_start).date()
+            if current_end and isinstance(current_end, str):
+                current_end = pd.to_datetime(current_end).date()
+        except:
+            current_start = None
+            current_end = None
+        
+        start_date = current_start if current_start and min_date <= current_start <= max_date else min_date
+        end_date = current_end if current_end and min_date <= current_end <= max_date else max_date
         responsible = current_responsible if current_responsible else []
         period = current_period if current_period else "monthly"
         
+        print(f"Initializing filters - Date range: {start_date} to {end_date}")
         return start_date, end_date, responsible, period
         
     except Exception as e:
         print(f"Error initializing filters: {e}")
-        return None, None, [], "monthly"
+        # Fallback to current month
+        today = datetime.now().date()
+        return today.replace(day=1), today, [], "monthly"
 
 
 @callback(
@@ -427,16 +458,30 @@ def filter_data(start_date, end_date, responsible, data):
             print(f"Missing required columns: {missing_columns}")
             return {'filtered_data': []}
         
-        # Convert dates
+        # Convert dates and handle string dates
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         df = df.dropna(subset=['Date'])  # Remove rows with invalid dates
         
+        if df.empty:
+            print("No valid dates found after conversion")
+            return {'filtered_data': []}
+        
+        # Handle date filtering with proper date conversion
         if start_date:
-            df = df[df['Date'] >= pd.to_datetime(start_date)]
-            print(f"After start date filter: {len(df)} records")
+            try:
+                start_dt = pd.to_datetime(start_date)
+                df = df[df['Date'] >= start_dt]
+                print(f"After start date filter ({start_date}): {len(df)} records")
+            except Exception as e:
+                print(f"Error filtering by start date {start_date}: {e}")
+        
         if end_date:
-            df = df[df['Date'] <= pd.to_datetime(end_date)]
-            print(f"After end date filter: {len(df)} records")
+            try:
+                end_dt = pd.to_datetime(end_date)
+                df = df[df['Date'] <= end_dt]
+                print(f"After end date filter ({end_date}): {len(df)} records")
+            except Exception as e:
+                print(f"Error filtering by end date {end_date}: {e}")
         
         # Filter by responsible (multi-select logic)
         if responsible and len(responsible) > 0:
@@ -445,10 +490,14 @@ def filter_data(start_date, end_date, responsible, data):
         else:
             print(f"No responsible filter applied (showing all): {len(df)} records")
         
+        # Format dates for display
+        start_display = start_date.strftime('%d/%m/%Y') if start_date and hasattr(start_date, 'strftime') else str(start_date) if start_date else 'N/A'
+        end_display = end_date.strftime('%d/%m/%Y') if end_date and hasattr(end_date, 'strftime') else str(end_date) if end_date else 'N/A'
+        
         result = {
             'filtered_data': df.to_dict('records'),
-            'start_date': start_date,
-            'end_date': end_date,
+            'start_date': start_display,
+            'end_date': end_display,
             'responsible': responsible
         }
         
@@ -639,6 +688,20 @@ def update_category_chart(filtered_data, theme):
     except Exception as e:
         print(f"Error creating category chart: {e}")
         return create_empty_chart("Error al procesar datos de categorías", theme=theme)
+
+
+# Additional callback to ensure widget stability
+@callback(
+    Output("filtered-data-store", "data", allow_duplicate=True),
+    Input("sidebar", "is_open"),
+    State("filtered-data-store", "data"),
+    prevent_initial_call=True
+)
+def ensure_widget_stability(sidebar_open, current_filtered_data):
+    """Ensure widgets remain stable when sidebar opens/closes"""
+    # This callback helps maintain widget state when sidebar toggles
+    # It prevents the widgets from losing their state
+    return current_filtered_data if current_filtered_data else {'filtered_data': []}
 
 
 @callback(
