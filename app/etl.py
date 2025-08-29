@@ -42,6 +42,9 @@ class HomeSpendETL:
             'Descripción': 'Description', 
             'Descripcion': 'Description',
             'Business': 'Description',  # English version
+            'Category': 'Category',  # Already in English
+            'Categoría': 'Category',
+            'Categoria': 'Category',
             'Monto': 'Amount',
             'Responsable': 'Responsible',
             'Tarjeta': 'Card'
@@ -53,7 +56,7 @@ class HomeSpendETL:
                 cleaned_df = cleaned_df.rename(columns={old_name: new_name})
         
         # Ensure required columns exist
-        required_columns = ['Date', 'Description', 'Amount', 'Responsible', 'Card']
+        required_columns = ['Date', 'Description', 'Amount', 'Responsible', 'Card', 'Category']
         for col in required_columns:
             if col not in cleaned_df.columns:
                 cleaned_df[col] = np.nan
@@ -65,7 +68,7 @@ class HomeSpendETL:
         cleaned_df['Amount'] = self._clean_amounts(cleaned_df['Amount'])
         
         # Clean text columns
-        text_columns = ['Description', 'Responsible', 'Card']
+        text_columns = ['Description', 'Responsible', 'Card', 'Category']
         for col in text_columns:
             cleaned_df[col] = self._clean_text(cleaned_df[col])
         

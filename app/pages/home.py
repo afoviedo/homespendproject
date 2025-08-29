@@ -655,11 +655,22 @@ def update_category_chart(filtered_data, theme):
     
     try:
         # Ensure required columns and data types
-        required_columns = ['Description', 'Amount']
+        required_columns = ['Amount']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             print(f"Missing required columns for category chart: {missing_columns}")
             return create_empty_chart("Error: Columnas faltantes en los datos", theme=theme)
+        
+        # Use Category column if available, otherwise fallback to Description
+        if 'Category' in df.columns and not df['Category'].isna().all():
+            category_column = 'Category'
+            print("Using Category column for grouping")
+        elif 'Description' in df.columns:
+            category_column = 'Description'
+            print("Using Description column as fallback for grouping")
+        else:
+            print("No category column available")
+            return create_empty_chart("Error: No hay columna de categoría disponible", theme=theme)
         
         df['Amount'] = pd.to_numeric(df['Amount'], errors='coerce')
         df = df.dropna(subset=['Amount'])
@@ -668,8 +679,8 @@ def update_category_chart(filtered_data, theme):
             print("No valid data after cleaning for category chart")
             return create_empty_chart("No hay datos válidos para mostrar", theme=theme)
         
-        # Use Description as category (Business column)
-        df_grouped = df.groupby('Description')['Amount'].sum().reset_index()
+        # Use Category column for grouping
+        df_grouped = df.groupby(category_column)['Amount'].sum().reset_index()
         df_grouped = df_grouped.sort_values('Amount', ascending=True)  # Sort for better visualization
         
         print(f"Category grouped data: {len(df_grouped)} categories")
@@ -681,10 +692,10 @@ def update_category_chart(filtered_data, theme):
         fig = px.bar(
             df_grouped, 
             x='Amount', 
-            y='Description',
+            y=category_column,
             orientation='h',
             title="Gastos por Categoría",
-            labels={'Amount': 'Monto (₡)', 'Description': 'Categoría'},
+            labels={'Amount': 'Monto (₡)', category_column: 'Categoría'},
             color='Amount',
             color_continuous_scale='Blues'
         )
