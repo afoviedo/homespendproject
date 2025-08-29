@@ -451,7 +451,7 @@ clientside_callback(
         return "";
     }
     """,
-    Output("theme-dummy", "children"),
+    Output("global-loading-output", "children"),
     Input("sidebar", "is_open"),
     prevent_initial_call=True
 )
