@@ -97,7 +97,19 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     multi=True,
                                     placeholder="Selecciona responsables (vacío = todos)"
                                 )
-                            ], width=12, lg=4),
+                            ], width=12, lg=3),
+                            
+                            # Category Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Categorías:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="category-filter",
+                                    options=[],  # Will be populated dynamically
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona categorías (vacío = todas)"
+                                )
+                            ], width=12, lg=3),
                             
                             # Chart Period Filter
                             dbc.Col([
@@ -112,7 +124,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                     value="monthly",
                                     clearable=False
                                 )
-                            ], width=12, lg=4),
+                            ], width=12, lg=3),
                         ])
                     ])
                 ])
@@ -379,29 +391,31 @@ def create_default_kpi_cards():
     [Output("start-date-input", "value"),
      Output("end-date-input", "value"),
      Output("responsible-filter", "value"),
+     Output("category-filter", "value"),
      Output("chart-period-filter", "value")],
     [Input("home-data-store", "data")],
     [State("start-date-input", "value"),
      State("end-date-input", "value"),
      State("responsible-filter", "value"),
+     State("category-filter", "value"),
      State("chart-period-filter", "value")]
 )
-def initialize_filters(data, current_start, current_end, current_responsible, current_period):
+def initialize_filters(data, current_start, current_end, current_responsible, current_category, current_period):
     """Initialize filters with data range and maintain current values"""
     if not data or not data.get('processed_data'):
-        return None, None, [], "monthly"
+        return None, None, [], [], "monthly"
     
     try:
         df = pd.DataFrame(data['processed_data'])
         if df.empty:
-            return None, None, [], "monthly"
+            return None, None, [], [], "monthly"
         
         # Calculate date range from data
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         df = df.dropna(subset=['Date'])
         
         if df.empty:
-            return None, None, [], "monthly"
+            return None, None, [], [], "monthly"
         
         min_date = df['Date'].min().date()
         max_date = df['Date'].max().date()
@@ -431,19 +445,48 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
         start_date = current_start if current_start and extended_min_date <= current_start <= extended_max_date else min_date
         end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date
         responsible = current_responsible if current_responsible else []
+        category = current_category if current_category else []
         period = current_period if current_period else "monthly"
         
         print(f"Initializing filters - Date range: {start_date} to {end_date}")
         print(f"Data date range: {min_date} to {max_date}")
         print(f"Extended range: {extended_min_date} to {extended_max_date}")
         print(f"Current values: start={current_start}, end={current_end}")
-        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, period
+        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, category, period
         
     except Exception as e:
         print(f"Error initializing filters: {e}")
         # Fallback to current month
         today = datetime.now().date()
-        return today.replace(day=1), today, [], "monthly"
+        return today.replace(day=1), today, [], [], "monthly"
+
+
+@callback(
+    Output("category-filter", "options"),
+    [Input("home-data-store", "data")]
+)
+def populate_category_filter(data):
+    """Populate category filter options from data"""
+    if not data or not data.get('processed_data'):
+        return []
+    
+    try:
+        df = pd.DataFrame(data['processed_data'])
+        if df.empty or 'Category' not in df.columns:
+            return []
+        
+        # Get unique categories and sort them
+        categories = sorted(df['Category'].unique().tolist())
+        
+        # Create options for dropdown
+        options = [{"label": cat, "value": cat} for cat in categories if cat and str(cat).strip()]
+        
+        print(f"Populated category filter with {len(options)} options")
+        return options
+        
+    except Exception as e:
+        print(f"Error populating category filter: {e}")
+        return []
 
 
 @callback(
@@ -451,9 +494,10 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
     [Input("start-date-input", "value"),
      Input("end-date-input", "value"),
      Input("responsible-filter", "value"),
+     Input("category-filter", "value"),
      Input("home-data-store", "data")]
 )
-def filter_data(start_date, end_date, responsible, data):
+def filter_data(start_date, end_date, responsible, category, data):
     """Filter data based on date range and responsible"""
     print(f"Filter callback triggered with data: {data is not None}")
     
@@ -512,6 +556,13 @@ def filter_data(start_date, end_date, responsible, data):
             print(f"After responsible filter ({len(responsible)} selected): {len(df)} records")
         else:
             print(f"No responsible filter applied (showing all): {len(df)} records")
+        
+        # Filter by category (multi-select logic)
+        if category and len(category) > 0:
+            df = df[df['Category'].isin(category)]
+            print(f"After category filter ({len(category)} selected): {len(df)} records")
+        else:
+            print(f"No category filter applied (showing all): {len(df)} records")
         
         # Format dates for display
         start_display = start_date.strftime('%d/%m/%Y') if start_date and hasattr(start_date, 'strftime') else str(start_date) if start_date else 'N/A'
@@ -597,6 +648,12 @@ def update_time_series_chart(filtered_data, period, theme):
         if df_grouped.empty:
             return create_empty_chart(theme=theme)
         
+        # Calculate reference lines
+        avg_amount = df_grouped['Amount'].mean()
+        
+        # Calculate healthy spending target (10% below average)
+        healthy_target = avg_amount * 0.9
+        
         # Create chart
         fig = px.line(
             df_grouped, 
@@ -606,10 +663,29 @@ def update_time_series_chart(filtered_data, period, theme):
             labels={'Amount': 'Monto (₡)', 'Date': x_title}
         )
         
-        # Customize chart
+        # Customize main line
         fig.update_traces(
             line=dict(width=3),
             marker=dict(size=8)
+        )
+        
+        # Add average line (dashed)
+        fig.add_hline(
+            y=avg_amount,
+            line_dash="dash",
+            line_color="orange",
+            annotation_text=f"Promedio: ₡{avg_amount:,.0f}",
+            annotation_position="top right"
+        )
+        
+        # Add healthy spending target line (solid)
+        fig.add_hline(
+            y=healthy_target,
+            line_dash="solid",
+            line_color="green",
+            line_width=2,
+            annotation_text=f"Meta Financiera: ₡{healthy_target:,.0f}",
+            annotation_position="bottom right"
         )
         
         # Customize chart with dynamic theme
