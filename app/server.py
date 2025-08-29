@@ -243,10 +243,21 @@ def display_page(pathname, global_data):
     raw_data = global_data.get('raw_data', []) if global_data else []
     
     # Calculate KPIs
-    kpis = {}
+    kpis = {
+        'total_amount': 0,
+        'total_transactions': 0,
+        'avg_amount': 0,
+        'vs_previous_month': 0
+    }
     if processed_data:
         df = pd.DataFrame(processed_data)
-        kpis = etl_processor.calculate_kpis(df)
+        calculated_kpis = etl_processor.calculate_kpis(df)
+        kpis = {
+            'total_amount': calculated_kpis.get('total_amount', 0),
+            'total_transactions': calculated_kpis.get('transaction_count', 0),
+            'avg_amount': calculated_kpis.get('average_ticket', 0),
+            'vs_previous_month': calculated_kpis.get('month_delta', 0)
+        }
     
     # Route to appropriate page
     if pathname == "/" or pathname == "/home":

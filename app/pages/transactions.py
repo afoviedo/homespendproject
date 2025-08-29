@@ -1,35 +1,33 @@
 """
-Transactions Page - Detailed transaction listing and filtering
+Transactions Page - Vista de todas las transacciones
 """
 
-import dash_bootstrap_components as dbc
-from dash import html, dcc
 import pandas as pd
+from dash import html, dcc, callback, Output, Input, State
+import dash_bootstrap_components as dbc
+from typing import Optional
 
-from layout import layout
 
-
-def create_layout(data: pd.DataFrame = None):
+def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
     """Create transactions page layout"""
     
-    # Page header
-    page_header = html.Div([
-        html.H2("📋 Transacciones", className="mb-0"),
-        html.P("Listado detallado de todas las transacciones", className="text-muted")
-    ], className="mb-4")
-    
-    # Content
-    content = dbc.Card([
-        dbc.CardHeader("📊 Tabla de Transacciones"),
-        dbc.CardBody([
-            layout.create_loading_spinner("transactions-table", "Cargando transacciones...")
-        ])
-    ])
-    
-    return html.Div([
-        page_header,
-        content,
+    return dbc.Container([
+        dbc.Row([
+            dbc.Col([
+                html.H2([
+                    html.I(className="fas fa-list me-3"),
+                    "📋 TRANSACCIONES"
+                ], className="mb-0"),
+                html.P("Vista detallada de todas las transacciones", className="text-muted")
+            ])
+        ], className="mb-4"),
         
-        # Hidden stores
-        dcc.Store(id="transactions-data-store"),
-    ])
+        dbc.Row([
+            dbc.Col([
+                dbc.Alert([
+                    html.H4("🚧 En Desarrollo", className="alert-heading"),
+                    html.P("Esta página estará disponible próximamente con funcionalidades avanzadas de filtrado y exportación.")
+                ], color="info")
+            ])
+        ])
+    ], fluid=True)
