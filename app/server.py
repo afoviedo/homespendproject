@@ -338,23 +338,25 @@ def refresh_global_data(pathname, interval_count, current_data):
         return create_sample_data(), html.Div()
 
 
-# Sidebar toggle callback
+# Sidebar toggle callback - using clientside for better performance
 clientside_callback(
     """
     function(n_clicks) {
-        if (n_clicks) {
-            const sidebar = document.querySelector('[data-bs-target="#sidebar"]');
-            if (sidebar) {
-                sidebar.click();
-            }
+        if (n_clicks > 0) {
+            // Simple toggle based on click count
+            return n_clicks % 2 === 1;
         }
-        return '';
+        return false;
     }
     """,
-    Output("sidebar-toggle", "children"),
+    Output("sidebar", "is_open"),
     Input("sidebar-toggle", "n_clicks"),
     prevent_initial_call=True
 )
+
+
+# Note: Page routing is handled by the main display_page callback above (lines 211-271)
+# This duplicate callback has been removed to avoid conflicts
 
 
 # Sync data across all pages
