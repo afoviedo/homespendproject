@@ -56,34 +56,32 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     ]),
                     dbc.CardBody([
                         dbc.Row([
-                            # Date Range Filter - Using separate DatePickers for better stability
+                            # Date Range Filter - Using HTML5 date inputs for better navigation
                             dbc.Col([
                                 html.Label("📅 Rango de Fechas:", className="fw-bold mb-2"),
                                 dbc.Row([
                                     dbc.Col([
                                         html.Label("Desde:", className="small text-muted"),
-                                        dcc.DatePickerSingle(
-                                            id="start-date-picker",
-                                            date=min_date,
-                                            display_format='DD/MM/YYYY',
-                                            style={'width': '100%'},
-                                            min_date_allowed=extended_min_date,
-                                            max_date_allowed=extended_max_date,
-                                            clearable=True,
-                                            placeholder="Fecha inicial"
+                                        html.Input(
+                                            id="start-date-input",
+                                            type="date",
+                                            value=min_date.strftime('%Y-%m-%d'),
+                                            min=extended_min_date.strftime('%Y-%m-%d'),
+                                            max=extended_max_date.strftime('%Y-%m-%d'),
+                                            className="form-control",
+                                            style={'width': '100%'}
                                         )
                                     ], width=6),
                                     dbc.Col([
                                         html.Label("Hasta:", className="small text-muted"),
-                                        dcc.DatePickerSingle(
-                                            id="end-date-picker",
-                                            date=max_date,
-                                            display_format='DD/MM/YYYY',
-                                            style={'width': '100%'},
-                                            min_date_allowed=extended_min_date,
-                                            max_date_allowed=extended_max_date,
-                                            clearable=True,
-                                            placeholder="Fecha final"
+                                        html.Input(
+                                            id="end-date-input",
+                                            type="date",
+                                            value=max_date.strftime('%Y-%m-%d'),
+                                            min=extended_min_date.strftime('%Y-%m-%d'),
+                                            max=extended_max_date.strftime('%Y-%m-%d'),
+                                            className="form-control",
+                                            style={'width': '100%'}
                                         )
                                     ], width=6)
                                 ])
@@ -375,13 +373,13 @@ def create_default_kpi_cards():
 
 
 @callback(
-    [Output("start-date-picker", "date"),
-     Output("end-date-picker", "date"),
+    [Output("start-date-input", "value"),
+     Output("end-date-input", "value"),
      Output("responsible-filter", "value"),
      Output("chart-period-filter", "value")],
     [Input("home-data-store", "data")],
-    [State("start-date-picker", "date"),
-     State("end-date-picker", "date"),
+    [State("start-date-input", "value"),
+     State("end-date-input", "value"),
      State("responsible-filter", "value"),
      State("chart-period-filter", "value")]
 )
@@ -433,7 +431,7 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
         period = current_period if current_period else "monthly"
         
         print(f"Initializing filters - Date range: {start_date} to {end_date}")
-        return start_date, end_date, responsible, period
+        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, period
         
     except Exception as e:
         print(f"Error initializing filters: {e}")
@@ -444,8 +442,8 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
 
 @callback(
     Output("filtered-data-store", "data"),
-    [Input("start-date-picker", "date"),
-     Input("end-date-picker", "date"),
+    [Input("start-date-input", "value"),
+     Input("end-date-input", "value"),
      Input("responsible-filter", "value"),
      Input("home-data-store", "data")]
 )

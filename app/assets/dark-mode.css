@@ -352,3 +352,43 @@
 .DateRangePicker_picker.is-open {
     z-index: 10002 !important;
 }
+
+/* HTML5 Date Input styling */
+input[type="date"] {
+    background-color: #ffffff !important;
+    border: 1px solid #ced4da !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.75rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    color: #495057 !important;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out !important;
+}
+
+input[type="date"]:focus {
+    border-color: #86b7fe !important;
+    outline: 0 !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Dark mode date input styling */
+[data-bs-theme="dark"] input[type="date"] {
+    background-color: #495057 !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] input[type="date"]:focus {
+    border-color: #86b7fe !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
+}
+
+/* Date input calendar icon styling */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0) !important;
+    cursor: pointer !important;
+}
+
+[data-bs-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) !important;
+}
