@@ -89,15 +89,8 @@ def create_sample_data():
             'Category': 'Gastos Generales'
         })
     
-    # Add fixed expenses for current month
-    current_month_start = datetime.now().replace(day=1)
-    fixed_expenses = [
-        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Vivienda', 'Amount': 430000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'},
-        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Vehículo', 'Amount': 230000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'},
-        {'Date': current_month_start.strftime('%Y-%m-%d'), 'Description': 'Donaciones', 'Amount': 240000, 'Responsible': 'Gastos Fijos', 'Card': 'N/A', 'Category': 'Gastos Fijos'}
-    ]
-    
-    sample_records.extend(fixed_expenses)
+    # Fixed expenses are now managed directly in OneDrive Excel file
+    # No need to add them to sample data
     
     return {
         'raw_data': sample_records,
@@ -328,9 +321,8 @@ def refresh_global_data(pathname, interval_count, current_data):
         
         print(f"Successfully loaded {len(df)} transactions from OneDrive")
         
-        # Process data
-        print(f"🔄 About to process data with fixed expenses injection...")
-        processed_df = etl.process_data(df, inject_fixed=True)
+        # Process data (fixed expenses are managed in OneDrive Excel file)
+        processed_df = etl.process_data(df)
         
         # Calculate KPIs
         kpis = etl.calculate_kpis(processed_df)

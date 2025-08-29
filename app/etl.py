@@ -25,29 +25,8 @@ class HomeSpendETL:
         }
         
         # Fixed expenses configuration
-        self.fixed_expenses = [
-            {
-                'Description': 'Vivienda',
-                'Amount': 430000,
-                'Responsible': 'Gastos Fijos',
-                'Date': None,  # Will be set to first day of month
-                'Card': 'FIXED'
-            },
-            {
-                'Description': 'Vehículo', 
-                'Amount': 230000,
-                'Responsible': 'Gastos Fijos',
-                'Date': None,
-                'Card': 'FIXED'
-            },
-            {
-                'Description': 'Donaciones',
-                'Amount': 240000,
-                'Responsible': 'Gastos Fijos', 
-                'Date': None,
-                'Card': 'FIXED'
-            }
-        ]
+        # Fixed expenses are now managed directly in OneDrive Excel file
+        # No need for code-based injection
     
     def clean_data(self, df: pd.DataFrame) -> pd.DataFrame:
         """Clean and standardize the raw data"""
@@ -179,66 +158,10 @@ class HomeSpendETL:
         
         return processed_df
     
-    def inject_fixed_expenses(self, df: pd.DataFrame, target_month: int = None, target_year: int = None) -> pd.DataFrame:
-        """Inject fixed expenses for the target month (defaults to current month)"""
-        if target_month is None or target_year is None:
-            now = datetime.now(self.timezone)
-            target_month = target_month or now.month
-            target_year = target_year or now.year
-        
-        # Create first day of target month
-        first_day = date(target_year, target_month, 1)
-        
-        print(f"🔍 Fixed expenses injection check for {target_month}/{target_year}:")
-        print(f"   Input DataFrame size: {len(df)} records")
-        if not df.empty:
-            print(f"   DataFrame columns: {df.columns.tolist()}")
-            print(f"   Sample data types: {df.dtypes.to_dict()}")
-            if 'Responsible' in df.columns:
-                unique_responsibles = df['Responsible'].unique()
-                print(f"   Unique responsibles: {unique_responsibles}")
-            else:
-                print(f"   ⚠️  'Responsible' column NOT found!")
-        
-        # Check if fixed expenses already exist for this month
-        if not df.empty:
-            df_month_data = df[
-                (pd.to_datetime(df['Date']).dt.month == target_month) & 
-                (pd.to_datetime(df['Date']).dt.year == target_year) &
-                (df['Responsible'] == 'Gastos Fijos')
-            ]
-            
-            print(f"   Existing fixed expenses found: {len(df_month_data)} records")
-            if not df_month_data.empty:
-                print(f"   📋 Existing fixed expenses: {df_month_data['Description'].tolist()}")
-                print(f"   📋 Amounts: {df_month_data['Amount'].tolist()}")
-                print(f"   ⚠️  SKIPPING injection - fixed expenses already exist")
-                return df
-        
-        # Create fixed expenses rows
-        print(f"   ✅ INJECTING fixed expenses for {target_month}/{target_year}")
-        fixed_rows = []
-        for expense in self.fixed_expenses:
-            fixed_row = expense.copy()
-            fixed_row['Date'] = pd.Timestamp(first_day)  # Convert to Timestamp for consistency
-            fixed_rows.append(fixed_row)
-            print(f"   💰 Adding: {expense['Description']} - ₡{expense['Amount']:,.0f}")
-        
-        # Convert to DataFrame and combine
-        fixed_df = pd.DataFrame(fixed_rows)
-        
-        if df.empty:
-            print(f"   📊 Returning only fixed expenses: {len(fixed_df)} records")
-            return fixed_df
-        else:
-            combined_df = pd.concat([df, fixed_df], ignore_index=True)
-            # Sort by date
-            combined_df = combined_df.sort_values('Date').reset_index(drop=True)
-            print(f"   📊 Combined DataFrame: {len(df)} original + {len(fixed_df)} fixed = {len(combined_df)} total")
-            return combined_df
+    # inject_fixed_expenses method removed - fixed expenses are now managed directly in OneDrive Excel file
     
-    def process_data(self, raw_df: pd.DataFrame, inject_fixed: bool = True) -> pd.DataFrame:
-        """Complete ETL pipeline"""
+    def process_data(self, raw_df: pd.DataFrame) -> pd.DataFrame:
+        """Complete ETL pipeline - fixed expenses are managed in OneDrive Excel file"""
         print(f"🔄 ETL Processing Pipeline:")
         print(f"   Input raw data: {len(raw_df)} records")
         
@@ -248,15 +171,7 @@ class HomeSpendETL:
         
         # Step 2: Apply responsible rules
         processed_df = self.apply_responsible_rules(cleaned_df)
-        print(f"   After responsible rules: {len(processed_df)} records")
-        
-        # Step 3: Inject fixed expenses if requested
-        if inject_fixed:
-            print(f"   💉 CALLING inject_fixed_expenses...")
-            processed_df = self.inject_fixed_expenses(processed_df)
-            print(f"   After fixed injection: {len(processed_df)} records")
-        else:
-            print(f"   ⚠️  Fixed injection SKIPPED (inject_fixed=False)")
+        print(f"   Final processed data: {len(processed_df)} records")
         
         return processed_df
     
