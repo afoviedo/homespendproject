@@ -771,17 +771,21 @@ def update_last_transactions_table(filtered_data):
         print(f"Error formatting last transactions: {e}")
         return html.P("Error al procesar las transacciones", className="text-muted text-center")
     
-    # Create table
-    table = dbc.Table.from_dataframe(
-        df_display[['Date', 'Description', 'Amount', 'Responsible', 'Card']],
+    # Create table with header showing filtered info
+    table_header = html.Div([
+        html.Small(f"Mostrando últimas {len(df_display)} de {len(df)} transacciones filtradas", 
+                  className="text-muted mb-2 d-block"),
+        dbc.Table.from_dataframe(
+            df_display[['Date', 'Description', 'Amount', 'Responsible', 'Card']],
             striped=True,
             bordered=True,
             hover=True,
             responsive=True,
-        size='sm'
-    )
+            size='sm'
+        )
+    ])
     
-    return table
+    return table_header
 
 
 @callback(
@@ -838,17 +842,21 @@ def update_top_transactions_table(filtered_data):
         print(f"Error formatting top transactions: {e}")
         return html.P("Error al procesar las transacciones", className="text-muted text-center")
     
-    # Create table
-    table = dbc.Table.from_dataframe(
-        df_display[['Date', 'Description', 'Amount', 'Responsible']],
-        striped=True,
-        bordered=True,
-        hover=True,
-        responsive=True,
-        size='sm'
-    )
+    # Create table with header showing filtered info
+    table_header = html.Div([
+        html.Small(f"Mostrando top 5 de {len(df)} transacciones filtradas", 
+                  className="text-muted mb-2 d-block"),
+        dbc.Table.from_dataframe(
+            df_display[['Date', 'Description', 'Amount', 'Responsible']],
+            striped=True,
+            bordered=True,
+            hover=True,
+            responsive=True,
+            size='sm'
+        )
+    ])
     
-    return table
+    return table_header
 
 
 def create_empty_chart(message="No hay datos disponibles para el período seleccionado", theme="dark"):
