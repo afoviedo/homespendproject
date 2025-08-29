@@ -791,6 +791,10 @@ def update_last_transactions_table(filtered_data):
 def update_top_transactions_table(filtered_data):
     """Update top 5 highest transactions table"""
     print(f"Top transactions callback triggered")
+    print(f"Filtered data available: {filtered_data is not None}")
+    if filtered_data:
+        print(f"Filtered data keys: {list(filtered_data.keys())}")
+        print(f"Filtered data records: {len(filtered_data.get('filtered_data', []))}")
     
     if not filtered_data or not filtered_data.get('filtered_data'):
         print("No filtered data for top transactions table")
@@ -821,6 +825,9 @@ def update_top_transactions_table(filtered_data):
         
         # Get top 5 highest transactions
         df_top = df.nlargest(5, 'Amount')
+        print(f"Top 5 transactions found: {len(df_top)} records")
+        print(f"Top transaction amount: {df_top['Amount'].max() if not df_top.empty else 'N/A'}")
+        print(f"Date range in top transactions: {df_top['Date'].min()} to {df_top['Date'].max() if not df_top.empty else 'N/A'}")
         
         # Format the data for display
         df_display = df_top.copy()
