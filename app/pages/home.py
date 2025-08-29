@@ -186,7 +186,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
         ], className="mb-4"),
         
         # Data stores
-        dcc.Store(id="home-data-store"),
+        dcc.Store(id="home-data-store", data={'processed_data': df.to_dict('records')} if df is not None and not df.empty else {'processed_data': []}),
         dcc.Store(id="filtered-data-store"),
         
     ], fluid=True)
@@ -254,33 +254,43 @@ def create_kpi_card(title: str, value: str, delta: float = None,
     Output("filtered-data-store", "data"),
     [Input("date-range-picker", "start_date"),
      Input("date-range-picker", "end_date"),
-     Input("responsible-filter", "value")],
-    [State("home-data-store", "data")]
+     Input("responsible-filter", "value"),
+     Input("home-data-store", "data")]
 )
 def filter_data(start_date, end_date, responsible, data):
     """Filter data based on date range and responsible"""
+    print(f"Filter callback triggered with data: {data is not None}")
+    
     if not data or not data.get('processed_data'):
+        print("No data available for filtering")
         return {}
     
     df = pd.DataFrame(data['processed_data'])
+    print(f"Original data: {len(df)} records")
     
     # Convert dates
     df['Date'] = pd.to_datetime(df['Date'])
     if start_date:
         df = df[df['Date'] >= pd.to_datetime(start_date)]
+        print(f"After start date filter: {len(df)} records")
     if end_date:
         df = df[df['Date'] <= pd.to_datetime(end_date)]
+        print(f"After end date filter: {len(df)} records")
     
     # Filter by responsible
     if responsible and responsible != "Todos":
         df = df[df['Responsible'] == responsible]
+        print(f"After responsible filter: {len(df)} records")
     
-    return {
+    result = {
         'filtered_data': df.to_dict('records'),
         'start_date': start_date,
         'end_date': end_date,
         'responsible': responsible
     }
+    
+    print(f"Returning filtered data: {len(result['filtered_data'])} records")
+    return result
 
 
 @callback(
@@ -290,59 +300,79 @@ def filter_data(start_date, end_date, responsible, data):
 )
 def update_time_series_chart(filtered_data, period):
     """Update time series chart based on filtered data and period"""
+    print(f"Chart callback triggered with period: {period}")
+    print(f"Filtered data available: {filtered_data is not None}")
+    
     if not filtered_data or not filtered_data.get('filtered_data'):
+        print("No filtered data available for chart")
         return create_empty_chart()
     
     df = pd.DataFrame(filtered_data['filtered_data'])
+    print(f"Chart data: {len(df)} records")
+    
+    if df.empty:
+        print("DataFrame is empty")
+        return create_empty_chart()
+    
     df['Date'] = pd.to_datetime(df['Date'])
     
     # Group by period
-    if period == "daily":
-        df_grouped = df.groupby(df['Date'].dt.date)['Amount'].sum().reset_index()
-        title = "Gastos por Día"
-        x_title = "Fecha"
-    elif period == "weekly":
-        df['Week'] = df['Date'].dt.isocalendar().week
-        df['Year'] = df['Date'].dt.year
-        df['WeekYear'] = df['Year'].astype(str) + "-W" + df['Week'].astype(str).str.zfill(2)
-        df_grouped = df.groupby('WeekYear')['Amount'].sum().reset_index()
-        df_grouped.columns = ['Date', 'Amount']
-        title = "Gastos por Semana (ISO)"
-        x_title = "Semana"
-    else:  # monthly
-        df['Month'] = df['Date'].dt.to_period('M')
-        df_grouped = df.groupby('Month')['Amount'].sum().reset_index()
-        df_grouped['Date'] = df_grouped['Month'].astype(str)
-        title = "Gastos por Mes"
-        x_title = "Mes"
-    
-    # Create chart
-    fig = px.line(
-        df_grouped, 
-        x='Date', 
-        y='Amount',
-        title=title,
-        labels={'Amount': 'Monto (₡)', 'Date': x_title}
-    )
-    
-    # Customize chart
-    fig.update_traces(
-        line=dict(width=3),
-        marker=dict(size=8)
-    )
-    
-    fig.update_layout(
-        template="plotly_white",
-        height=400,
-        xaxis_title=x_title,
-        yaxis_title="Monto (₡)",
-        hovermode='x unified'
-    )
-    
-    # Format y-axis as currency
-    fig.update_yaxis(tickformat='₡,.0f')
-    
-    return fig
+    try:
+        if period == "daily":
+            df_grouped = df.groupby(df['Date'].dt.date)['Amount'].sum().reset_index()
+            title = "Gastos por Día"
+            x_title = "Fecha"
+        elif period == "weekly":
+            df['Week'] = df['Date'].dt.isocalendar().week
+            df['Year'] = df['Date'].dt.year
+            df['WeekYear'] = df['Year'].astype(str) + "-W" + df['Week'].astype(str).str.zfill(2)
+            df_grouped = df.groupby('WeekYear')['Amount'].sum().reset_index()
+            df_grouped.columns = ['Date', 'Amount']
+            title = "Gastos por Semana (ISO)"
+            x_title = "Semana"
+        else:  # monthly
+            df['Month'] = df['Date'].dt.to_period('M')
+            df_grouped = df.groupby('Month')['Amount'].sum().reset_index()
+            df_grouped['Date'] = df_grouped['Month'].astype(str)
+            title = "Gastos por Mes"
+            x_title = "Mes"
+        
+        print(f"Grouped data: {len(df_grouped)} points")
+        
+        if df_grouped.empty:
+            return create_empty_chart()
+        
+        # Create chart
+        fig = px.line(
+            df_grouped, 
+            x='Date', 
+            y='Amount',
+            title=title,
+            labels={'Amount': 'Monto (₡)', 'Date': x_title}
+        )
+        
+        # Customize chart
+        fig.update_traces(
+            line=dict(width=3),
+            marker=dict(size=8)
+        )
+        
+        fig.update_layout(
+            template="plotly_white",
+            height=400,
+            xaxis_title=x_title,
+            yaxis_title="Monto (₡)",
+            hovermode='x unified'
+        )
+        
+        # Format y-axis as currency
+        fig.update_yaxis(tickformat='₡,.0f')
+        
+        return fig
+        
+    except Exception as e:
+        print(f"Error creating chart: {e}")
+        return create_empty_chart()
 
 
 @callback(
@@ -351,18 +381,31 @@ def update_time_series_chart(filtered_data, period):
 )
 def update_last_transactions_table(filtered_data):
     """Update last 10 transactions table"""
+    print(f"Last transactions callback triggered")
+    
     if not filtered_data or not filtered_data.get('filtered_data'):
+        print("No filtered data for last transactions table")
         return html.P("No hay transacciones disponibles", className="text-muted text-center")
     
     df = pd.DataFrame(filtered_data['filtered_data'])
+    print(f"Last transactions data: {len(df)} records")
+    
+    if df.empty:
+        return html.P("No hay transacciones en el período seleccionado", className="text-muted text-center")
+    
     df['Date'] = pd.to_datetime(df['Date'])
     
     # Get last 10 transactions
     df_last = df.nlargest(10, 'Date')
     
+    # Format the data for display
+    df_display = df_last.copy()
+    df_display['Date'] = df_display['Date'].dt.strftime('%d/%m/%Y')
+    df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+    
     # Create table
     table = dbc.Table.from_dataframe(
-        df_last[['Date', 'Description', 'Amount', 'Responsible', 'Card']].round(0),
+        df_display[['Date', 'Description', 'Amount', 'Responsible', 'Card']],
         striped=True,
         bordered=True,
         hover=True,
@@ -379,17 +422,29 @@ def update_last_transactions_table(filtered_data):
 )
 def update_top_transactions_table(filtered_data):
     """Update top 5 highest transactions table"""
+    print(f"Top transactions callback triggered")
+    
     if not filtered_data or not filtered_data.get('filtered_data'):
+        print("No filtered data for top transactions table")
         return html.P("No hay transacciones disponibles", className="text-muted text-center")
     
     df = pd.DataFrame(filtered_data['filtered_data'])
+    print(f"Top transactions data: {len(df)} records")
+    
+    if df.empty:
+        return html.P("No hay transacciones en el período seleccionado", className="text-muted text-center")
     
     # Get top 5 highest transactions
     df_top = df.nlargest(5, 'Amount')
     
+    # Format the data for display
+    df_display = df_top.copy()
+    df_display['Date'] = pd.to_datetime(df_display['Date']).dt.strftime('%d/%m/%Y')
+    df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+    
     # Create table
     table = dbc.Table.from_dataframe(
-        df_top[['Date', 'Description', 'Amount', 'Responsible']].round(0),
+        df_display[['Date', 'Description', 'Amount', 'Responsible']],
         striped=True,
         bordered=True,
         hover=True,
