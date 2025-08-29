@@ -16,7 +16,7 @@ def create_layout(raw_df: Optional[pd.DataFrame] = None, processed_df: Optional[
             dbc.Col([
                 html.H2([
                     html.I(className="fas fa-database me-3"),
-                    "🗄️ DATOS"
+                    "DATOS"
                 ], className="mb-0"),
                 html.P("Gestión y visualización de datos de OneDrive", className="text-muted")
             ])
@@ -25,7 +25,7 @@ def create_layout(raw_df: Optional[pd.DataFrame] = None, processed_df: Optional[
         dbc.Row([
             dbc.Col([
                 dbc.Alert([
-                    html.H4("🚧 En Desarrollo", className="alert-heading"),
+                    html.H4("En Desarrollo", className="alert-heading"),
                     html.P("Esta página estará disponible próximamente para gestionar la sincronización con OneDrive.")
                 ], color="info")
             ])

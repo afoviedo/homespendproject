@@ -286,7 +286,7 @@ def display_page(pathname, global_data):
                 dbc.Col([
                     dbc.Card([
                         dbc.CardBody([
-                            html.H3("🔐 Autenticación Requerida", className="text-center mb-4"),
+                            html.H3("Autenticación Requerida", className="text-center mb-4"),
                             html.P("Por favor inicia sesión con tu cuenta Microsoft para acceder a HomeSpend.", 
                                   className="text-center text-muted mb-4"),
                             dbc.Button(
@@ -338,7 +338,7 @@ def display_page(pathname, global_data):
     else:
         return dbc.Container([
             dbc.Alert([
-                html.H4("⚠️ Página no encontrada", className="alert-heading"),
+                html.H4("Página no encontrada", className="alert-heading"),
                 html.P(f"La página '{pathname}' no existe."),
                 html.Hr(),
                 dbc.Button("🏠 Ir al Inicio", href="/", color="primary")

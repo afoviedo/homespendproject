@@ -35,7 +35,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
             dbc.Col([
                 html.H2([
                     html.I(className="fas fa-chart-bar me-3"),
-                    "📊 RESUMEN FINANCIERO"
+                    "RESUMEN FINANCIERO"
                 ], className="mb-0"),
                 html.P("Dashboard principal con indicadores clave", className="text-muted")
             ])
@@ -51,14 +51,14 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-filter me-2"),
-                            "🔧 Filtros"
+                            "Filtros"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
                         dbc.Row([
                             # Date Range Filter - Using HTML5 date inputs for better navigation
                             dbc.Col([
-                                html.Label("📅 Rango de Fechas:", className="fw-bold mb-2"),
+                                html.Label("Rango de Fechas:", className="fw-bold mb-2"),
                                 dbc.Row([
                                     dbc.Col([
                                         html.Label("Desde:", className="small text-muted"),
@@ -89,7 +89,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                             
                             # Responsible Filter (Multi-select)
                             dbc.Col([
-                                html.Label("👤 Responsables:", className="fw-bold mb-2"),
+                                html.Label("Responsables:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id="responsible-filter",
                                     options=[{"label": r, "value": r} for r in responsibles if r != "Todos"],
@@ -101,7 +101,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                             
                             # Chart Period Filter
                             dbc.Col([
-                                html.Label("📊 Período del Gráfico:", className="fw-bold mb-2"),
+                                html.Label("Período del Gráfico:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
                                     id="chart-period-filter",
                                     options=[
@@ -127,7 +127,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-chart-line me-2"),
-                            "📈 Evolución de Gastos en el Tiempo"
+                            "Evolución de Gastos en el Tiempo"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
@@ -145,7 +145,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-chart-bar me-2"),
-                            "📊 Gastos por Categoría"
+                            "Gastos por Categoría"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
@@ -166,7 +166,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-clock me-2"),
-                            "🕒 Últimas 10 Transacciones"
+                            "Últimas 10 Transacciones"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
@@ -181,7 +181,7 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                     dbc.CardHeader([
                         html.H5([
                             html.I(className="fas fa-trophy me-2"),
-                            "🏆 Top 5 Transacciones Más Altas"
+                            "Top 5 Transacciones Más Altas"
                         ], className="mb-0")
                     ]),
                     dbc.CardBody([
@@ -208,7 +208,7 @@ def create_empty_state() -> html.Div:
                 dbc.Alert([
                     html.H4([
                         html.I(className="fas fa-info-circle me-2"),
-                        "📊 Datos del Mes Actual"
+                        "Datos del Mes Actual"
                     ], className="alert-heading"),
                     html.P("No hay datos disponibles para mostrar el resumen financiero."),
                     html.Hr(),
@@ -426,7 +426,7 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
             current_end = None
         
         start_date = current_start if current_start and extended_min_date <= current_start <= extended_max_date else min_date
-        end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date
+        end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date + timedelta(days=1)
         responsible = current_responsible if current_responsible else []
         period = current_period if current_period else "monthly"
         

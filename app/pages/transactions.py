@@ -16,7 +16,7 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
             dbc.Col([
                 html.H2([
                     html.I(className="fas fa-list me-3"),
-                    "📋 TRANSACCIONES"
+                    "TRANSACCIONES"
                 ], className="mb-0"),
                 html.P("Vista detallada de todas las transacciones", className="text-muted")
             ])
@@ -25,7 +25,7 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
         dbc.Row([
             dbc.Col([
                 dbc.Alert([
-                    html.H4("🚧 En Desarrollo", className="alert-heading"),
+                    html.H4("En Desarrollo", className="alert-heading"),
                     html.P("Esta página estará disponible próximamente con funcionalidades avanzadas de filtrado y exportación.")
                 ], color="info")
             ])

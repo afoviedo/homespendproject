@@ -16,7 +16,7 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
             dbc.Col([
                 html.H2([
                     html.I(className="fas fa-calendar-alt me-3"),
-                    "📅 GASTOS FIJOS"
+                    "GASTOS FIJOS"
                 ], className="mb-0"),
                 html.P("Gestión y seguimiento de gastos fijos mensuales", className="text-muted")
             ])
@@ -25,7 +25,7 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
         dbc.Row([
             dbc.Col([
                 dbc.Alert([
-                    html.H4("🚧 En Desarrollo", className="alert-heading"),
+                    html.H4("En Desarrollo", className="alert-heading"),
                     html.P("Esta página estará disponible próximamente para gestionar gastos fijos recurrentes.")
                 ], color="info")
             ])

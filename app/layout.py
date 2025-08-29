@@ -53,7 +53,7 @@ class PremiumLayout:
                     align_end=True,
                 ),
             ],
-            brand="💰 HomeSpend",
+            brand="HomeSpend",
             brand_href="/",
             color="primary",
             dark=True,
@@ -65,7 +65,7 @@ class PremiumLayout:
         """Create collapsible sidebar for navigation and filters"""
         sidebar_content = [
             html.Hr(),
-            html.P("📊 Navegación", className="text-muted mb-3"),
+            html.P("Navegación", className="text-muted mb-3"),
             
             dbc.Nav(
                 [
@@ -99,7 +99,7 @@ class PremiumLayout:
             ),
             
             html.Hr(),
-            html.P("🔧 Filtros", className="text-muted mb-3"),
+            html.P("Filtros", className="text-muted mb-3"),
             
             # Refresh button
             dbc.Button(
@@ -113,7 +113,7 @@ class PremiumLayout:
         return dbc.Offcanvas(
             sidebar_content,
             id="sidebar",
-            title="🎛️ Controles",
+            title="Controles",
             is_open=False,
             placement="start",
             style={"width": "350px"}
