@@ -395,31 +395,29 @@ def create_default_kpi_cards():
     [Output("start-date-input", "value"),
      Output("end-date-input", "value"),
      Output("responsible-filter", "value"),
-     Output("category-filter", "value"),
      Output("chart-period-filter", "value")],
     [Input("home-data-store", "data")],
     [State("start-date-input", "value"),
      State("end-date-input", "value"),
      State("responsible-filter", "value"),
-     State("category-filter", "value"),
      State("chart-period-filter", "value")]
 )
-def initialize_filters(data, current_start, current_end, current_responsible, current_category, current_period):
+def initialize_filters(data, current_start, current_end, current_responsible, current_period):
     """Initialize filters with data range and maintain current values"""
     if not data or not data.get('processed_data'):
-        return None, None, [], [], "monthly"
+        return None, None, [], "monthly"
     
     try:
         df = pd.DataFrame(data['processed_data'])
         if df.empty:
-            return None, None, [], [], "monthly"
+            return None, None, [], "monthly"
         
         # Calculate date range from data
         df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
         df = df.dropna(subset=['Date'])
         
         if df.empty:
-            return None, None, [], [], "monthly"
+            return None, None, [], "monthly"
         
         min_date = df['Date'].min().date()
         max_date = df['Date'].max().date()
@@ -449,20 +447,29 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
         start_date = current_start if current_start and extended_min_date <= current_start <= extended_max_date else min_date
         end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date
         responsible = current_responsible if current_responsible else []
-        category = current_category if current_category else []
         period = current_period if current_period else "monthly"
         
         print(f"Initializing filters - Date range: {start_date} to {end_date}")
         print(f"Data date range: {min_date} to {max_date}")
         print(f"Extended range: {extended_min_date} to {extended_max_date}")
         print(f"Current values: start={current_start}, end={current_end}")
-        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, category, period
+        return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, period
         
     except Exception as e:
         print(f"Error initializing filters: {e}")
         # Fallback to current month
         today = datetime.now().date()
-        return today.replace(day=1), today, [], [], "monthly"
+        return today.replace(day=1), today, [], "monthly"
+
+
+@callback(
+    Output("category-filter", "value"),
+    [Input("home-data-store", "data")]
+)
+def initialize_category_filter_value(data):
+    """Initialize category filter value"""
+    print(f"Category filter value callback triggered")
+    return []
 
 
 @callback(
