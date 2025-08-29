@@ -299,22 +299,25 @@ def refresh_global_data(pathname, interval_count, current_data):
         onedrive = OneDriveManager(access_token)
         etl = HomeSpendETL()
         
-        # Get file from OneDrive
+        # Get file path for logging
         file_path = os.getenv('ONEDRIVE_FILE_PATH', '/Casa/HomeSpend.xlsx')
-        file_name = os.getenv('ONEDRIVE_FILE_NAME', 'HomeSpend.xlsx')
         
         print(f"Attempting to load OneDrive file: {file_path}")
         
-        # Download file
-        excel_data = onedrive.download_file(file_path)
-        if not excel_data:
-            print(f"Could not download file from {file_path}")
+        # Check if file exists
+        if not onedrive.file_exists():
+            print(f"File not found: {file_path}")
             return create_sample_data(), html.Div()
         
-        print(f"Successfully downloaded file, processing data...")
+        # Get transactions data directly from OneDrive
+        df = onedrive.get_transactions_data()
+        if df is None or df.empty:
+            print(f"Could not load data from {file_path}")
+            return create_sample_data(), html.Div()
+        
+        print(f"Successfully loaded {len(df)} transactions from OneDrive")
         
         # Process data
-        df = etl.load_data(excel_data)
         processed_df = etl.process_data(df)
         
         # Calculate KPIs
