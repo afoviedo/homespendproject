@@ -425,12 +425,15 @@ def initialize_filters(data, current_start, current_end, current_responsible, cu
             current_start = None
             current_end = None
         
-        start_date = current_start if current_start and min_date <= current_start <= max_date else min_date
-        end_date = current_end if current_end and min_date <= current_end <= max_date else max_date
+        start_date = current_start if current_start and extended_min_date <= current_start <= extended_max_date else min_date
+        end_date = current_end if current_end and extended_min_date <= current_end <= extended_max_date else max_date
         responsible = current_responsible if current_responsible else []
         period = current_period if current_period else "monthly"
         
         print(f"Initializing filters - Date range: {start_date} to {end_date}")
+        print(f"Data date range: {min_date} to {max_date}")
+        print(f"Extended range: {extended_min_date} to {extended_max_date}")
+        print(f"Current values: start={current_start}, end={current_end}")
         return start_date.strftime('%Y-%m-%d'), end_date.strftime('%Y-%m-%d'), responsible, period
         
     except Exception as e:
@@ -479,6 +482,9 @@ def filter_data(start_date, end_date, responsible, data):
             return {'filtered_data': []}
         
         # Handle date filtering with proper date conversion
+        print(f"Filtering with dates: start={start_date}, end={end_date}")
+        print(f"Available dates in data: {df['Date'].min()} to {df['Date'].max()}")
+        
         if start_date:
             try:
                 start_dt = pd.to_datetime(start_date)
