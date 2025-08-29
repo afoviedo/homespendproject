@@ -197,7 +197,7 @@ app.layout = html.Div([
             id="global-refresh-interval",
             interval=300000,  # 5 minutes
             n_intervals=0,
-            disabled=True
+            disabled=False
         ),
         
     ], fluid=True)
