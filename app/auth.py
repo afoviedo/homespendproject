@@ -65,15 +65,7 @@ class MicrosoftAuth:
             redirect_uri = self.redirect_uri
             return self.microsoft.authorize_redirect(redirect_uri, state=state)
         
-        @self.app.route('/auth/login')
-        def auth_login():
-            """Alternative login route for Dash navigation"""
-            # Generate state for security
-            state = secrets.token_urlsafe(32)
-            session['oauth_state'] = state
-            
-            redirect_uri = self.redirect_uri
-            return self.microsoft.authorize_redirect(redirect_uri, state=state)
+
         
         @self.app.route('/auth/callback')
         def auth_callback():
