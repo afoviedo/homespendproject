@@ -192,13 +192,7 @@ app.layout = html.Div([
             children=html.Div(id="global-loading-output")
         ),
         
-        # Global interval for data refresh
-        dcc.Interval(
-            id="global-refresh-interval",
-            interval=300000,  # 5 minutes
-            n_intervals=0,
-            disabled=False
-        ),
+
         
     ], fluid=True)
 ])
@@ -369,12 +363,11 @@ def display_page(pathname, global_data):
 @callback(
     [Output("global-data-store", "data"),
      Output("global-loading-output", "children")],
-    [Input("url", "pathname"),
-     Input("global-refresh-interval", "n_intervals")],
+    [Input("url", "pathname")],
     [State("global-data-store", "data")],
     prevent_initial_call=False
 )
-def refresh_global_data(pathname, interval_count, current_data):
+def refresh_global_data(pathname, current_data):
     """Refresh global data from OneDrive"""
     
     if not auth.is_authenticated():
