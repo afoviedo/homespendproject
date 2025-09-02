@@ -24,7 +24,7 @@ from etl import HomeSpendETL
 from layout import layout
 
 # Import pages
-from pages import home, transactions, fixed, data
+from pages import home, transactions, about
 
 
 # Initialize Flask app
@@ -342,13 +342,8 @@ def display_page(pathname, global_data):
         return home.create_layout(pd.DataFrame(processed_data) if processed_data else None, kpis)
     elif pathname == "/transactions":
         return transactions.create_layout(pd.DataFrame(processed_data) if processed_data else None)
-    elif pathname == "/fixed":
-        return fixed.create_layout()
-    elif pathname == "/data":
-        return data.create_layout(
-            pd.DataFrame(raw_data) if raw_data else None,
-            pd.DataFrame(processed_data) if processed_data else None
-        )
+    elif pathname == "/about":
+        return about.create_layout()
     else:
         return dbc.Container([
             dbc.Alert([
@@ -491,9 +486,7 @@ def toggle_sidebar(n_clicks, is_open):
 # Sync data across all pages
 @callback(
     [Output("home-data-store", "data"),
-     Output("transactions-data-store", "data"),
-     Output("fixed-data-store", "data"),
-     Output("data-page-store", "data")],
+     Output("transactions-data-store", "data")],
     [Input("global-data-store", "data")]
 )
 def sync_page_data(global_data):
@@ -501,26 +494,9 @@ def sync_page_data(global_data):
     if not global_data:
         # Return empty data structures instead of empty dicts to maintain widget state
         empty_data = {'processed_data': [], 'raw_data': [], 'kpis': {}}
-        return empty_data, empty_data, empty_data, empty_data
+        return empty_data, empty_data
     
-    # Add fixed expenses status to fixed page data
-    fixed_data = global_data.copy()
-    if global_data.get('processed_data'):
-        df = pd.DataFrame(global_data['processed_data'])
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        
-        # Check if fixed expenses exist for current month
-        fixed_current = df[
-            (pd.to_datetime(df['Date']).dt.month == current_month) & 
-            (pd.to_datetime(df['Date']).dt.year == current_year) &
-            (df['Responsible'] == 'Gastos Fijos')
-        ]
-        
-        fixed_data['has_fixed_current_month'] = not fixed_current.empty
-        fixed_data['total_fixed_amount'] = fixed_current['Amount'].sum() if not fixed_current.empty else 0
-    
-    return global_data, global_data, fixed_data, global_data
+    return global_data, global_data
 
 
 # Error handling

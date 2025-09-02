@@ -81,15 +81,10 @@ class PremiumLayout:
                         active="exact",
                         className="mb-2"
                     ),
+
                     dbc.NavLink(
-                        [html.I(className="fas fa-calendar-alt me-2"), "Gastos Fijos"],
-                        href="/fixed",
-                        active="exact",
-                        className="mb-2"
-                    ),
-                    dbc.NavLink(
-                        [html.I(className="fas fa-database me-2"), "Datos"],
-                        href="/data",
+                        [html.I(className="fas fa-info-circle me-2"), "Acerca de"],
+                        href="/about",
                         active="exact",
                         className="mb-2"
                     ),
