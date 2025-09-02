@@ -867,6 +867,7 @@ def update_last_transactions_table(filtered_data):
         df_display = df_last.copy()
         df_display['Date'] = df_display['Date'].dt.strftime('%d/%m/%Y')
         df_display['Amount'] = df_display['Amount'].apply(lambda x: f"₡{x:,.0f}")
+        df_display['Responsible'] = df_display['Responsible'].apply(lambda x: '.'.join([c[0] for c in x.split()]))
         
     except Exception as e:
         print(f"Error formatting last transactions: {e}")
