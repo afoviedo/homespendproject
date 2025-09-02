@@ -160,7 +160,7 @@ app.layout = html.Div([
     # html.Script(src="/assets/widget-config.js"),
     
     dbc.Container([
-        dcc.Location(id="url", refresh=False),
+        dcc.Location(id="url", refresh=True),
         
         # Navbar
         html.Div(id="navbar-container"),
@@ -436,7 +436,7 @@ def refresh_global_data(pathname, interval_count, current_data):
 
 
 
-# Login button callback - Hybrid approach
+# Login button callback - Simple navigation with refresh=True
 @callback(
     Output("url", "pathname"),
     Input("login-button", "n_clicks"),
@@ -448,23 +448,6 @@ def navigate_to_login(n_clicks):
         print(f"Login button clicked, redirecting to Microsoft OAuth")
         return "/login"
     return "/"
-
-# Clientside callback for direct browser navigation
-app.clientside_callback(
-    """
-    function(n_clicks) {
-        if (n_clicks && n_clicks > 0) {
-            console.log('Login button clicked, forcing full page navigation');
-            // Force full browser navigation to /login
-            window.location.href = '/login';
-        }
-        return '';
-    }
-    """,
-    Output("global-loading-output", "children"),
-    Input("login-button", "n_clicks"),
-    prevent_initial_call=True
-)
 
 
 # Sidebar toggle callback - using clientside for better performance
