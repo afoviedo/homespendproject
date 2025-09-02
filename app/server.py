@@ -443,21 +443,18 @@ def navigate_to_login(n_clicks):
     return "/"
 
 
-# Sidebar toggle callback - using clientside for better performance
-clientside_callback(
-    """
-    function(n_clicks) {
-        if (n_clicks > 0) {
-            // Simple toggle based on click count
-            return n_clicks % 2 === 1;
-        }
-        return false;
-    }
-    """,
+# Sidebar toggle callback - using Python callback for better state management
+@callback(
     Output("sidebar", "is_open"),
     Input("sidebar-toggle", "n_clicks"),
+    State("sidebar", "is_open"),
     prevent_initial_call=True
 )
+def toggle_sidebar(n_clicks, is_open):
+    """Toggle sidebar open/close state"""
+    if n_clicks:
+        return not is_open
+    return is_open
 
 # Additional callback to handle widget stability when sidebar opens/closes - Temporarily disabled
 # clientside_callback(
