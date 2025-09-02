@@ -116,7 +116,9 @@ class PremiumLayout:
             title="Controles",
             is_open=False,
             placement="start",
-            style={"width": "350px"}
+            style={"width": "350px"},
+            backdrop=False,  # Disable backdrop to prevent interaction blocking
+            scrollable=True  # Enable scrolling for long content
         )
     
     def create_sidebar_toggle(self) -> dbc.Button:
