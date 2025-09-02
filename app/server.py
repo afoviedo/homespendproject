@@ -258,36 +258,7 @@ def update_layout_components(pathname, theme):
     return navbar, sidebar, sidebar_toggle, user_data
 
 
-# Login navigation callback - redirect directly to Microsoft OAuth
-@callback(
-    Output("url", "pathname"),
-    Input("login-button", "n_clicks"),
-    prevent_initial_call=True
-)
-def navigate_to_login(n_clicks):
-    """Navigate to login page when login button is clicked"""
-    if n_clicks:
-        print(f"Login button clicked, redirecting to Microsoft OAuth")
-        # Redirect directly to Microsoft OAuth instead of /login route
-        return "/login"
-    return "/"
 
-# Alternative approach: Use clientside callback for direct redirect
-app.clientside_callback(
-    """
-    function(n_clicks) {
-        if (n_clicks && n_clicks > 0) {
-            console.log('Login button clicked, redirecting to Microsoft OAuth');
-            // Direct redirect to Flask route
-            window.location.href = '/login';
-        }
-        return '';
-    }
-    """,
-    Output("global-loading-output", "children"),
-    Input("login-button", "n_clicks"),
-    prevent_initial_call=True
-)
 
 
 
@@ -324,12 +295,11 @@ def display_page(pathname, global_data):
                             html.H3("Autenticación Requerida", className="text-center mb-4"),
                             html.P("Por favor inicia sesión con tu cuenta Microsoft para acceder a HomeSpend.", 
                                   className="text-center text-muted mb-4"),
-                            dbc.Button(
+                            html.Button(
                                 [html.I(className="fab fa-microsoft me-2"), "Iniciar Sesión con Microsoft"],
-                                id="login-button",
-                                color="primary",
-                                size="lg",
-                                className="w-100"
+                                type="button",
+                                className="btn btn-primary btn-lg w-100",
+                                onClick="window.location.href='/login'"
                             )
                         ])
                     ], className="shadow")
