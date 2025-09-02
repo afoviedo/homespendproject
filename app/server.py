@@ -278,11 +278,12 @@ def toggle_theme(n_clicks, current_theme):
 
 @callback(
     Output("page-content", "children"),
-    Input("url", "pathname"),
+    [Input("url", "pathname"),
+     Input("global-data-store", "data")],
     prevent_initial_call=False
 )
-def display_page(pathname):
-    """Display page content based on URL"""
+def display_page(pathname, global_data):
+    """Display page content based on URL and data availability"""
     
     print(f"Display page callback triggered with pathname: {pathname}")
     
@@ -308,18 +309,61 @@ def display_page(pathname):
             ], className="min-vh-100 d-flex align-items-center")
         ], fluid=True)
     
-    # For authenticated users, show loading initially
-    # Data will be loaded by the global data callback
-    return dbc.Container([
-        dbc.Row([
-            dbc.Col([
-                dbc.Spinner(
-                    html.Div("Cargando datos...", className="text-center"),
-                    color="primary"
-                )
-            ], width=12, className="text-center")
-        ], className="min-vh-100 d-flex align-items-center")
-    ], fluid=True)
+    # For authenticated users, show loading initially or content when data is available
+    if not global_data:
+        return dbc.Container([
+            dbc.Row([
+                dbc.Col([
+                    dbc.Spinner(
+                        html.Div("Cargando datos...", className="text-center"),
+                        color="primary"
+                    )
+                ], width=12, className="text-center")
+            ], className="min-vh-100 d-flex align-items-center")
+        ], fluid=True)
+    
+    # Data is available, show appropriate page content
+    processed_data = global_data.get('processed_data', [])
+    raw_data = global_data.get('raw_data', [])
+    
+    # Calculate KPIs
+    kpis = {
+        'total_amount': 0,
+        'total_transactions': 0,
+        'avg_amount': 0,
+        'vs_previous_month': 0
+    }
+    if processed_data:
+        df = pd.DataFrame(processed_data)
+        calculated_kpis = etl_processor.calculate_kpis(df)
+        kpis = {
+            'total_amount': calculated_kpis.get('total_amount', 0),
+            'total_transactions': calculated_kpis.get('transaction_count', 0),
+            'avg_amount': calculated_kpis.get('average_ticket', 0),
+            'vs_previous_month': calculated_kpis.get('month_delta', 0)
+        }
+    
+    # Route to appropriate page
+    if pathname == "/" or pathname == "/home":
+        return home.create_layout(pd.DataFrame(processed_data) if processed_data else None, kpis)
+    elif pathname == "/transactions":
+        return transactions.create_layout(pd.DataFrame(processed_data) if processed_data else None)
+    elif pathname == "/fixed":
+        return fixed.create_layout()
+    elif pathname == "/data":
+        return data.create_layout(
+            pd.DataFrame(raw_data) if raw_data else None,
+            pd.DataFrame(processed_data) if processed_data else None
+        )
+    else:
+        return dbc.Container([
+            dbc.Alert([
+                html.H4("Página no encontrada", className="alert-heading"),
+                html.P(f"La página '{pathname}' no existe."),
+                html.Hr(),
+                dbc.Button("🏠 Ir al Inicio", href="/", color="primary")
+            ], color="warning")
+        ])
 
 
 @callback(
@@ -389,80 +433,7 @@ def refresh_global_data(pathname, interval_count, current_data):
         return create_sample_data(), html.Div()
 
 
-# Callback to update page content when data is available
-@callback(
-    Output("page-content", "children"),
-    [Input("global-data-store", "data"),
-     Input("url", "pathname")],
-    prevent_initial_call=False
-)
-def update_page_content(global_data, pathname):
-    """Update page content when data is available"""
-    
-    if not auth.is_authenticated():
-        return dbc.Container([
-            dbc.Row([
-                dbc.Col([
-                    dbc.Card([
-                        dbc.CardBody([
-                            html.H3("Autenticación Requerida", className="text-center mb-4"),
-                            html.P("Por favor inicia sesión con tu cuenta Microsoft para acceder a HomeSpend.", 
-                                  className="text-center text-muted mb-4"),
-                            dbc.Button(
-                                [html.I(className="fab fa-microsoft me-2"), "Iniciar Sesión con Microsoft"],
-                                id="login-button",
-                                color="primary",
-                                size="lg",
-                                className="w-100"
-                            )
-                        ])
-                    ], className="shadow")
-                ], width=12, lg=6, className="mx-auto")
-            ], className="min-vh-100 d-flex align-items-center")
-        ], fluid=True)
-    
-    # Default data structure
-    processed_data = global_data.get('processed_data', []) if global_data else []
-    raw_data = global_data.get('raw_data', []) if global_data else []
-    
-    # Calculate KPIs
-    kpis = {
-        'total_amount': 0,
-        'total_transactions': 0,
-        'avg_amount': 0,
-        'vs_previous_month': 0
-    }
-    if processed_data:
-        df = pd.DataFrame(processed_data)
-        calculated_kpis = etl_processor.calculate_kpis(df)
-        kpis = {
-            'total_amount': calculated_kpis.get('total_amount', 0),
-            'total_transactions': calculated_kpis.get('transaction_count', 0),
-            'avg_amount': calculated_kpis.get('average_ticket', 0),
-            'vs_previous_month': calculated_kpis.get('month_delta', 0)
-        }
-    
-    # Route to appropriate page
-    if pathname == "/" or pathname == "/home":
-        return home.create_layout(pd.DataFrame(processed_data) if processed_data else None, kpis)
-    elif pathname == "/transactions":
-        return transactions.create_layout(pd.DataFrame(processed_data) if processed_data else None)
-    elif pathname == "/fixed":
-        return fixed.create_layout()
-    elif pathname == "/data":
-        return data.create_layout(
-            pd.DataFrame(raw_data) if raw_data else None,
-            pd.DataFrame(processed_data) if processed_data else None
-        )
-    else:
-        return dbc.Container([
-            dbc.Alert([
-                html.H4("Página no encontrada", className="alert-heading"),
-                html.P(f"La página '{pathname}' no existe."),
-                html.Hr(),
-                dbc.Button("🏠 Ir al Inicio", href="/", color="primary")
-            ], color="warning")
-        ])
+
 
 
 # Login button callback
