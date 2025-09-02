@@ -258,6 +258,20 @@ def update_layout_components(pathname, theme):
     return navbar, sidebar, sidebar_toggle, user_data
 
 
+# Login navigation callback - redirect directly to Microsoft OAuth
+@callback(
+    Output("url", "pathname"),
+    Input("login-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def navigate_to_login(n_clicks):
+    """Navigate to login page when login button is clicked"""
+    if n_clicks:
+        print(f"Login button clicked, redirecting to Microsoft OAuth")
+        # Redirect directly to Microsoft OAuth instead of /login route
+        return "/auth/login"
+    return "/"
+
 # Theme toggle callback
 @callback(
     Output("theme-store", "data"),
@@ -280,6 +294,8 @@ def toggle_theme(n_clicks, current_theme):
 def display_page(pathname, global_data):
     """Display page content based on URL"""
     
+    print(f"Display page callback triggered with pathname: {pathname}")
+    
     if not auth.is_authenticated():
         return dbc.Container([
             dbc.Row([
@@ -291,7 +307,7 @@ def display_page(pathname, global_data):
                                   className="text-center text-muted mb-4"),
                             dbc.Button(
                                 [html.I(className="fab fa-microsoft me-2"), "Iniciar Sesión con Microsoft"],
-                                href="/login",
+                                id="login-button",
                                 color="primary",
                                 size="lg",
                                 className="w-100"
