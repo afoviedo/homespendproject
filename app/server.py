@@ -295,11 +295,12 @@ def display_page(pathname):
                             html.H3("Autenticación Requerida", className="text-center mb-4"),
                             html.P("Por favor inicia sesión con tu cuenta Microsoft para acceder a HomeSpend.", 
                                   className="text-center text-muted mb-4"),
-                            html.Button(
+                            dbc.Button(
                                 [html.I(className="fab fa-microsoft me-2"), "Iniciar Sesión con Microsoft"],
-                                type="button",
-                                className="btn btn-primary btn-lg w-100",
-                                onClick="window.location.href='/login'"
+                                id="login-button",
+                                color="primary",
+                                size="lg",
+                                className="w-100"
                             )
                         ])
                     ], className="shadow")
@@ -407,11 +408,12 @@ def update_page_content(global_data, pathname):
                             html.H3("Autenticación Requerida", className="text-center mb-4"),
                             html.P("Por favor inicia sesión con tu cuenta Microsoft para acceder a HomeSpend.", 
                                   className="text-center text-muted mb-4"),
-                            html.Button(
+                            dbc.Button(
                                 [html.I(className="fab fa-microsoft me-2"), "Iniciar Sesión con Microsoft"],
-                                type="button",
-                                className="btn btn-primary btn-lg w-100",
-                                onClick="window.location.href='/login'"
+                                id="login-button",
+                                color="primary",
+                                size="lg",
+                                className="w-100"
                             )
                         ])
                     ], className="shadow")
@@ -461,6 +463,20 @@ def update_page_content(global_data, pathname):
                 dbc.Button("🏠 Ir al Inicio", href="/", color="primary")
             ], color="warning")
         ])
+
+
+# Login button callback
+@callback(
+    Output("url", "pathname"),
+    Input("login-button", "n_clicks"),
+    prevent_initial_call=True
+)
+def navigate_to_login(n_clicks):
+    """Navigate to login page when login button is clicked"""
+    if n_clicks:
+        print(f"Login button clicked, redirecting to Microsoft OAuth")
+        return "/login"
+    return "/"
 
 
 # Sidebar toggle callback - using clientside for better performance
