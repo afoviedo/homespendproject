@@ -272,6 +272,23 @@ def navigate_to_login(n_clicks):
         return "/login"
     return "/"
 
+# Alternative approach: Use clientside callback for direct redirect
+app.clientside_callback(
+    """
+    function(n_clicks) {
+        if (n_clicks && n_clicks > 0) {
+            console.log('Login button clicked, redirecting to Microsoft OAuth');
+            // Direct redirect to Flask route
+            window.location.href = '/login';
+        }
+        return '';
+    }
+    """,
+    Output("global-loading-output", "children"),
+    Input("login-button", "n_clicks"),
+    prevent_initial_call=True
+)
+
 
 
 # Theme toggle callback
