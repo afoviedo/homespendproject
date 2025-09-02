@@ -141,9 +141,9 @@ def create_layout(df: Optional[pd.DataFrame] = None, kpis: Dict[str, Any] = None
                                 dcc.Dropdown(
                                     id="chart-period-filter",
                                     options=[
-                                        {"label": "Por Día", "value": "daily"},
-                                        {"label": "Por Semana (ISO)", "value": "weekly"},
-                                        {"label": "Por Mes", "value": "monthly"}
+                                        {"label": "Día", "value": "daily"},
+                                        {"label": "Semana", "value": "weekly"},
+                                        {"label": "Mes", "value": "monthly"}
                                     ],
                                     value="monthly",
                                     clearable=False
@@ -326,7 +326,7 @@ def update_kpi_cards(filtered_data):
         cards = [
             dbc.Col([
                 create_kpi_card(
-                    "Gasto Total (Filtrado)",
+                    "Gasto Total",
                     f"₡{total_amount:,.0f}",
                     None,
                     "fas fa-wallet",
@@ -845,7 +845,7 @@ def update_last_transactions_table(filtered_data):
     
     try:
         # Verify required columns
-        required_columns = ['Date', 'Description', 'Amount', 'Responsible']
+        required_columns = ['Date', 'Description', 'Amount', 'Category', 'Responsible', 'Card']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             print(f"Missing columns for last transactions: {missing_columns}")
@@ -877,7 +877,7 @@ def update_last_transactions_table(filtered_data):
         html.Small(f"Mostrando últimas {len(df_display)} de {len(df)} transacciones filtradas", 
                   className="text-muted mb-2 d-block"),
         dbc.Table.from_dataframe(
-            df_display[['Date', 'Description', 'Amount', 'Responsible', 'Card']],
+            df_display[required_columns],
             striped=True,
             bordered=True,
             hover=True,
@@ -913,7 +913,7 @@ def update_top_transactions_table(filtered_data):
     
     try:
         # Verify required columns
-        required_columns = ['Date', 'Description', 'Amount', 'Responsible']
+        required_columns = ['Date', 'Description', 'Amount', 'Category']
         missing_columns = [col for col in required_columns if col not in df.columns]
         if missing_columns:
             print(f"Missing columns for top transactions: {missing_columns}")
@@ -948,7 +948,7 @@ def update_top_transactions_table(filtered_data):
         html.Small(f"Mostrando top 10 de {len(df)} transacciones filtradas", 
                   className="text-muted mb-2 d-block"),
         dbc.Table.from_dataframe(
-            df_display[['Date', 'Description', 'Amount', 'Responsible']],
+            df_display[required_columns],
             striped=True,
             bordered=True,
             hover=True,
