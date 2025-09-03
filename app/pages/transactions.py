@@ -183,7 +183,7 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
     ], fluid=True)
 
 
-# Callbacks for filtering and table updates
+# Single consolidated callback for table and stats
 @callback(
     [Output("transactions-table-container", "children"),
      Output("filtered-total", "children"),
@@ -194,15 +194,11 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
      Input("transactions-responsible-filter", "value"),
      Input("transactions-start-date", "value"),
      Input("transactions-end-date", "value"),
-     Input("transactions-data-store", "data")],  # Add data store as input to trigger on data change
-    [State("transactions-data-store", "data")]
+     Input("transactions-data-store", "data")],
+    prevent_initial_call=False
 )
-def update_transactions_table(categories, responsibles, start_date, end_date, data, data_state):
-    """Update transactions table based on filters"""
-    
-    # Use data_state if data is None (initial load)
-    if data is None:
-        data = data_state
+def update_transactions_table(categories, responsibles, start_date, end_date, data):
+    """Update transactions table and stats based on filters and data changes"""
     
     if not data or not data.get('processed_data'):
         return html.Div("No hay datos disponibles"), "₡0", "0", "₡0", "₡0"
@@ -251,7 +247,7 @@ def update_transactions_table(categories, responsibles, start_date, end_date, da
                     html.Td(row['Date'], className="text-nowrap"),
                     html.Td(row['Description'], className="text-truncate"),
                     html.Td(row['Category'], className="text-nowrap"),
-                    html.Td(row['Responsible'], className="text-truncate"),
+                    html.Td(row['Responsible'], className="text-nowrap"),
                     html.Td(f"₡{row['Amount']:,.0f}", className="text-end fw-bold"),
                     html.Td(row['Card'], className="text-nowrap")
                 ])
@@ -274,57 +270,3 @@ def update_transactions_table(categories, responsibles, start_date, end_date, da
     return table, total_formatted, count_formatted, avg_formatted, max_formatted
 
 
-# Initial callback to populate table when page loads
-@callback(
-    Output("transactions-table-container", "children", allow_duplicate=True),
-    Input("transactions-data-store", "data"),
-    prevent_initial_call='initial_duplicate'
-)
-def initial_table_load(data):
-    """Load table initially when data becomes available"""
-    
-    if not data or not data.get('processed_data'):
-        return html.Div("Cargando datos...", className="text-center text-muted")
-    
-    df = pd.DataFrame(data['processed_data'])
-    
-    if df.empty:
-        return html.Div([
-            dbc.Alert([
-                html.H6("No hay transacciones disponibles", className="alert-heading"),
-                html.P("No se encontraron datos para mostrar.")
-            ], color="warning")
-        ])
-    
-    # Sort by date (most recent first)
-    df_sorted = df.sort_values('Date', ascending=False)
-    
-    # Create table rows
-    table_rows = []
-    for _, row in df_sorted.head(100).iterrows():  # Limit to 100 rows for performance
-        table_rows.append(
-            html.Tr([
-                html.Td(row['Date'], className="text-nowrap"),
-                html.Td(row['Description'], className="text-truncate"),
-                html.Td(row['Category'], className="text-nowrap"),
-                html.Td(row['Responsible'], className="text-nowrap"),
-                html.Td(f"₡{row['Amount']:,.0f}", className="text-end fw-bold"),
-                html.Td(row['Card'], className="text-nowrap")
-            ])
-        )
-    
-    table = dbc.Table([
-        html.Thead([
-            html.Tr([
-                html.Td("Fecha", className="text-nowrap fw-bold"),
-                html.Td("Descripción", className="text-nowrap fw-bold"),
-                html.Td("Categoría", className="text-nowrap fw-bold"),
-                html.Td("Responsable", className="text-nowrap fw-bold"),
-                html.Td("Monto", className="text-end text-nowrap fw-bold"),
-                html.Td("Tarjeta", className="text-nowrap fw-bold")
-            ])
-        ]),
-        html.Tbody(table_rows)
-    ], striped=True, hover=True, responsive=True, className="table-sm")
-    
-    return table
