@@ -1,16 +1,17 @@
 """
 Transactions Page - Vista de todas las transacciones con filtros avanzados
+Replicando la estructura robusta de Home para garantizar funcionamiento
 """
 
 import pandas as pd
+from datetime import datetime, timedelta
 from dash import html, dcc, callback, Output, Input, State
 import dash_bootstrap_components as dbc
 from typing import Optional
-from datetime import datetime, timedelta
 
 
 def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
-    """Create transactions page layout with filters and data table"""
+    """Create transactions page layout with filters and data table - replicating Home structure"""
     
     if df is None or df.empty:
         return dbc.Container([
@@ -34,28 +35,36 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
             ])
         ], fluid=True)
     
-    # Get unique values for filters
-    categories = sorted(df['Category'].unique()) if 'Category' in df.columns else []
-    responsibles = sorted(df['Responsible'].unique()) if 'Responsible' in df.columns else []
+    # Get unique responsibles for filter (same logic as Home)
+    responsibles = sorted(df['Responsible'].unique().tolist())
     
-    # Date range defaults - handle both string and datetime formats
-    if not df.empty:
-        min_date_obj = df['Date'].min()
-        max_date_obj = df['Date'].max()
-        
-        # Convert to string if it's a datetime object
-        if hasattr(min_date_obj, 'strftime'):
-            min_date = min_date_obj.strftime('%Y-%m-%d')
-        else:
-            min_date = str(min_date_obj)
-            
-        if hasattr(max_date_obj, 'strftime'):
-            max_date = max_date_obj.strftime('%Y-%m-%d')
-        else:
-            max_date = str(max_date_obj)
+    # Get unique categories for filter (same logic as Home)
+    if 'Category' in df.columns and not df['Category'].isna().all():
+        category_column = 'Category'
+        print(f"Using Category column for transactions layout")
+    elif 'Description' in df.columns:
+        category_column = 'Description'
+        print(f"Using Description column as fallback for transactions layout")
     else:
-        min_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-        max_date = datetime.now().strftime('%Y-%m-%d')
+        category_column = None
+        print(f"No category column available for transactions layout")
+    
+    if category_column:
+        categories = sorted(df[category_column].unique().tolist())
+        # Filter out empty/null values
+        categories = [cat for cat in categories if cat and str(cat).strip()]
+        print(f"Found {len(categories)} categories for transactions layout: {categories[:5]}...")
+    else:
+        categories = []
+        print("No categories available for transactions layout")
+    
+    # Calculate date range with extended limits (same logic as Home)
+    min_date = pd.to_datetime(df['Date']).min().date()
+    max_date = pd.to_datetime(df['Date']).max().date()
+    
+    # Extend the range to allow more navigation
+    extended_min_date = min_date - timedelta(days=365)  # 1 year before
+    extended_max_date = max_date + timedelta(days=365)  # 1 year after
     
     return dbc.Container([
         # Header
@@ -69,14 +78,32 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
             ])
         ], className="mb-4"),
         
-        # Filters Section
+        # Filters Row (exact same structure as Home)
         dbc.Row([
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-filter me-2"),
+                            "Filtros"
+                        ], className="mb-0")
+                    ]),
                     dbc.CardBody([
-                        html.H5("🔍 Filtros", className="card-title mb-3"),
+                        # First Row - Responsible and Category Filters
                         dbc.Row([
-                            # Category Filter
+                            # Responsible Filter (Multi-select)
+                            dbc.Col([
+                                html.Label("Responsables:", className="fw-bold mb-2"),
+                                dcc.Dropdown(
+                                    id="transactions-responsible-filter",
+                                    options=[{"label": r, "value": r} for r in responsibles],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona responsables (vacío = todos)"
+                                )
+                            ], width=12, lg=6),
+                            
+                            # Category Filter (Multi-select)
                             dbc.Col([
                                 html.Label("Categorías:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
@@ -86,20 +113,11 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
                                     multi=True,
                                     placeholder="Selecciona categorías (vacío = todas)"
                                 )
-                            ], width=12, lg=4),
-                            
-                            # Responsible Filter
-                            dbc.Col([
-                                html.Label("Responsables:", className="fw-bold mb-2"),
-                                dcc.Dropdown(
-                                    id="transactions-responsible-filter",
-                                    options=[{"label": resp, "value": resp} for resp in responsibles],
-                                    value=[],  # Empty list for multi-select
-                                    multi=True,
-                                    placeholder="Selecciona responsables (vacío = todos)"
-                                )
-                            ], width=12, lg=4),
-                            
+                            ], width=12, lg=6),
+                        ], className="mb-3"),
+                        
+                        # Second Row - Date Range
+                        dbc.Row([
                             # Date Range Filter
                             dbc.Col([
                                 html.Label("Rango de Fechas:", className="fw-bold mb-2"),
@@ -109,7 +127,9 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
                                         dcc.Input(
                                             id="transactions-start-date",
                                             type="date",
-                                            value=min_date,
+                                            value=min_date.strftime('%Y-%m-%d'),
+                                            min=extended_min_date.strftime('%Y-%m-%d'),
+                                            max=extended_max_date.strftime('%Y-%m-%d'),
                                             className="form-control",
                                             style={'width': '100%'}
                                         )
@@ -119,98 +139,70 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
                                         dcc.Input(
                                             id="transactions-end-date",
                                             type="date",
-                                            value=max_date,
+                                            value=max_date.strftime('%Y-%m-%d'),
+                                            min=extended_min_date.strftime('%Y-%m-%d'),
+                                            max=extended_max_date.strftime('%Y-%m-%d'),
                                             className="form-control",
                                             style={'width': '100%'}
                                         )
                                     ], width=6)
                                 ])
-                            ], width=12, lg=4)
-                        ], className="mb-3"),
-                        
-                        # Summary Stats
-                        dbc.Row([
-                            dbc.Col([
-                                dbc.Card([
-                                    dbc.CardBody([
-                                        html.H6("Total Filtrado", className="card-title text-muted"),
-                                        html.H4(id="filtered-total", className="text-primary mb-0")
-                                    ])
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                dbc.Card([
-                                    dbc.CardBody([
-                                        html.H6("Transacciones", className="card-title text-muted"),
-                                        html.H4(id="filtered-count", className="text-success mb-0")
-                                    ])
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                dbc.Card([
-                                    dbc.CardBody([
-                                        html.H6("Promedio", className="card-title text-muted"),
-                                        html.H4(id="filtered-avg", className="text-info mb-0")
-                                    ])
-                                ], className="text-center")
-                            ], width=3),
-                            dbc.Col([
-                                dbc.Card([
-                                    dbc.CardBody([
-                                        html.H6("Máximo", className="card-title text-muted"),
-                                        html.H4(id="filtered-max", className="text-warning mb-0")
-                                    ])
-                                ], className="text-center")
-                            ], width=3)
+                            ], width=12, lg=12),
                         ])
                     ])
-                ], className="shadow mb-4")
-            ], width=12)
-        ]),
+                ])
+            ])
+        ], className="mb-4"),
         
-        # Data Table
+        # Summary Stats Row (same structure as Home KPIs)
+        dbc.Row(id="transactions-summary-row", className="mb-4"),
+        
+        # Data Table Row (main content)
         dbc.Row([
             dbc.Col([
                 dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-table me-2"),
+                            "Tabla de Transacciones"
+                        ], className="mb-0")
+                    ]),
                     dbc.CardBody([
-                        html.H5("📊 Tabla de Transacciones", className="card-title mb-3"),
-                        html.Div(id="transactions-table-container")
+                        dcc.Loading(
+                            html.Div(id="transactions-table-container"),
+                            type="default"
+                        )
                     ])
-                ], className="shadow")
-            ], width=12)
+                ])
+            ])
         ])
         
     ], fluid=True)
 
 
-# Single consolidated callback for table and stats
+# Callbacks replicating Home structure but for transactions table
 @callback(
-    [Output("transactions-table-container", "children"),
-     Output("filtered-total", "children"),
-     Output("filtered-count", "children"),
-     Output("filtered-avg", "children"),
-     Output("filtered-max", "children")],
-    [Input("transactions-category-filter", "value"),
-     Input("transactions-responsible-filter", "value"),
+    Output("transactions-summary-row", "children"),
+    [Input("transactions-responsible-filter", "value"),
+     Input("transactions-category-filter", "value"),
      Input("transactions-start-date", "value"),
-     Input("transactions-end-date", "value"),
-     Input("transactions-data-store", "data")],
-    prevent_initial_call=False
+     Input("transactions-end-date", "value")],
+    [State("transactions-data-store", "data")]
 )
-def update_transactions_table(categories, responsibles, start_date, end_date, data):
-    """Update transactions table and stats based on filters and data changes"""
+def update_transactions_summary(responsibles, categories, start_date, end_date, data):
+    """Update summary statistics based on filters - same logic as Home KPIs"""
     
     if not data or not data.get('processed_data'):
-        return html.Div("No hay datos disponibles"), "₡0", "0", "₡0", "₡0"
+        return html.Div("No hay datos disponibles")
     
     df = pd.DataFrame(data['processed_data'])
     
-    # Apply filters
-    if categories and len(categories) > 0:
-        df = df[df['Category'].isin(categories)]
-    
+    # Apply filters (same logic as Home)
     if responsibles and len(responsibles) > 0:
         df = df[df['Responsible'].isin(responsibles)]
+    
+    if categories and len(categories) > 0:
+        df = df[df['Category'].isin(categories)]
     
     if start_date and end_date:
         df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
@@ -227,46 +219,110 @@ def update_transactions_table(categories, responsibles, start_date, end_date, da
     avg_formatted = f"₡{avg_amount:,.0f}"
     max_formatted = f"₡{max_amount:,.0f}"
     
+    # Return summary cards (same structure as Home KPIs)
+    return dbc.Row([
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H6("Total Filtrado", className="card-title text-muted"),
+                    html.H4(total_formatted, className="text-primary mb-0")
+                ])
+            ], className="text-center shadow-sm")
+        ], width=12, lg=3),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H6("Transacciones", className="card-title text-muted"),
+                    html.H4(count_formatted, className="text-success mb-0")
+                ])
+            ], className="text-center shadow-sm")
+        ], width=12, lg=3),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H6("Promedio", className="card-title text-muted"),
+                    html.H4(avg_formatted, className="text-info mb-0")
+                ])
+            ], className="text-center shadow-sm")
+        ], width=12, lg=3),
+        dbc.Col([
+            dbc.Card([
+                dbc.CardBody([
+                    html.H6("Máximo", className="card-title text-muted"),
+                    html.H4(max_formatted, className="text-warning mb-0")
+                ])
+            ], className="text-center shadow-sm")
+        ], width=12, lg=3)
+    ])
+
+
+@callback(
+    Output("transactions-table-container", "children"),
+    [Input("transactions-responsible-filter", "value"),
+     Input("transactions-category-filter", "value"),
+     Input("transactions-start-date", "value"),
+     Input("transactions-end-date", "value")],
+    [State("transactions-data-store", "data")]
+)
+def update_transactions_table(responsibles, categories, start_date, end_date, data):
+    """Update transactions table based on filters - same logic as Home charts"""
+    
+    if not data or not data.get('processed_data'):
+        return html.Div("No hay datos disponibles")
+    
+    df = pd.DataFrame(data['processed_data'])
+    
+    # Apply filters (same logic as Home)
+    if responsibles and len(responsibles) > 0:
+        df = df[df['Responsible'].isin(responsibles)]
+    
+    if categories and len(categories) > 0:
+        df = df[df['Category'].isin(categories)]
+    
+    if start_date and end_date:
+        df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
+    
     # Create table
     if df.empty:
-        table = html.Div([
+        return html.Div([
             dbc.Alert([
                 html.H6("No hay transacciones que coincidan con los filtros seleccionados", className="alert-heading"),
                 html.P("Intenta ajustar los criterios de búsqueda.")
             ], color="info")
         ])
-    else:
-        # Sort by date (most recent first)
-        df_sorted = df.sort_values('Date', ascending=False)
-        
-        # Create table rows
-        table_rows = []
-        for _, row in df_sorted.head(100).iterrows():  # Limit to 100 rows for performance
-            table_rows.append(
-                html.Tr([
-                    html.Td(row['Date'], className="text-nowrap"),
-                    html.Td(row['Description'], className="text-truncate"),
-                    html.Td(row['Category'], className="text-nowrap"),
-                    html.Td(row['Responsible'], className="text-nowrap"),
-                    html.Td(f"₡{row['Amount']:,.0f}", className="text-end fw-bold"),
-                    html.Td(row['Card'], className="text-nowrap")
-                ])
-            )
-        
-        table = dbc.Table([
-            html.Thead([
-                html.Tr([
-                    html.Td("Fecha", className="text-nowrap fw-bold"),
-                    html.Td("Descripción", className="text-nowrap fw-bold"),
-                    html.Td("Categoría", className="text-nowrap fw-bold"),
-                    html.Td("Responsable", className="text-nowrap fw-bold"),
-                    html.Td("Monto", className="text-end text-nowrap fw-bold"),
-                    html.Td("Tarjeta", className="text-nowrap fw-bold")
-                ])
-            ]),
-            html.Tbody(table_rows)
-        ], striped=True, hover=True, responsive=True, className="table-sm")
     
-    return table, total_formatted, count_formatted, avg_formatted, max_formatted
+    # Sort by date (most recent first)
+    df_sorted = df.sort_values('Date', ascending=False)
+    
+    # Create table rows (limit to 100 for performance)
+    table_rows = []
+    for _, row in df_sorted.head(100).iterrows():
+        table_rows.append(
+            html.Tr([
+                html.Td(row['Date'], className="text-nowrap"),
+                html.Td(row['Description'], className="text-truncate"),
+                html.Td(row['Category'], className="text-nowrap"),
+                html.Td(row['Responsible'], className="text-nowrap"),
+                html.Td(f"₡{row['Amount']:,.0f}", className="text-end fw-bold"),
+                html.Td(row['Card'], className="text-nowrap")
+            ])
+        )
+    
+    # Create table (same structure as Home tables)
+    table = dbc.Table([
+        html.Thead([
+            html.Tr([
+                html.Th("Fecha", className="text-nowrap"),
+                html.Th("Descripción", className="text-nowrap"),
+                html.Th("Categoría", className="text-nowrap"),
+                html.Th("Responsable", className="text-nowrap"),
+                html.Th("Monto", className="text-end text-nowrap"),
+                html.Th("Tarjeta", className="text-nowrap")
+            ])
+        ]),
+        html.Tbody(table_rows)
+    ], striped=True, hover=True, responsive=True, className="table-sm")
+    
+    return table
 
 
