@@ -187,25 +187,25 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
      Input("transactions-category-filter", "value"),
      Input("transactions-start-date", "value"),
      Input("transactions-end-date", "value")],
-    [State("transactions-data-store", "data")],
+    [Input("global-data-store", "data")],  # Direct access to global data
     prevent_initial_call=False
 )
-def update_transactions_summary(responsibles, categories, start_date, end_date, data):
+def update_transactions_summary(responsibles, categories, start_date, end_date, global_data):
     """Update summary statistics based on filters - same logic as Home KPIs"""
     
-    print(f"🔍 DEBUG: update_transactions_summary called with data: {data is not None}")
-    print(f"🔍 DEBUG: data type: {type(data)}")
-    if data:
-        print(f"🔍 DEBUG: data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
-        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in data}")
-        if 'processed_data' in data:
-            print(f"🔍 DEBUG: processed_data length: {len(data['processed_data'])}")
+    print(f"🔍 DEBUG: update_transactions_summary called with global_data: {global_data is not None}")
+    print(f"🔍 DEBUG: global_data type: {type(global_data)}")
+    if global_data:
+        print(f"🔍 DEBUG: global_data keys: {list(global_data.keys()) if isinstance(global_data, dict) else 'Not a dict'}")
+        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in global_data}")
+        if 'processed_data' in global_data:
+            print(f"🔍 DEBUG: processed_data length: {len(global_data['processed_data'])}")
     
-    if not data or not data.get('processed_data'):
-        print(f"🔍 DEBUG: No data or processed_data, returning 'No hay datos disponibles'")
+    if not global_data or not global_data.get('processed_data'):
+        print(f"🔍 DEBUG: No global_data or processed_data, returning 'No hay datos disponibles'")
         return html.Div("No hay datos disponibles")
     
-    df = pd.DataFrame(data['processed_data'])
+    df = pd.DataFrame(global_data['processed_data'])
     print(f"🔍 DEBUG: DataFrame created with {len(df)} rows")
     
     # Apply filters (same logic as Home)
@@ -273,25 +273,25 @@ def update_transactions_summary(responsibles, categories, start_date, end_date, 
      Input("transactions-category-filter", "value"),
      Input("transactions-start-date", "value"),
      Input("transactions-end-date", "value")],
-    [State("transactions-data-store", "data")],
+    [Input("global-data-store", "data")],  # Direct access to global data
     prevent_initial_call=False
 )
-def update_transactions_table(responsibles, categories, start_date, end_date, data):
+def update_transactions_table(responsibles, categories, start_date, end_date, global_data):
     """Update transactions table based on filters - same logic as Home charts"""
     
-    print(f"🔍 DEBUG: update_transactions_table called with data: {data is not None}")
-    print(f"🔍 DEBUG: data type: {type(data)}")
-    if data:
-        print(f"🔍 DEBUG: data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
-        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in data}")
-        if 'processed_data' in data:
-            print(f"🔍 DEBUG: processed_data length: {len(data['processed_data'])}")
+    print(f"🔍 DEBUG: update_transactions_table called with global_data: {global_data is not None}")
+    print(f"🔍 DEBUG: global_data type: {type(global_data)}")
+    if global_data:
+        print(f"🔍 DEBUG: global_data keys: {list(global_data.keys()) if isinstance(global_data, dict) else 'Not a dict'}")
+        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in global_data}")
+        if 'processed_data' in global_data:
+            print(f"🔍 DEBUG: processed_data length: {len(global_data['processed_data'])}")
     
-    if not data or not data.get('processed_data'):
-        print(f"🔍 DEBUG: No data or processed_data, returning 'No hay datos disponibles'")
+    if not global_data or not global_data.get('processed_data'):
+        print(f"🔍 DEBUG: No global_data or processed_data, returning 'No hay datos disponibles'")
         return html.Div("No hay datos disponibles")
     
-    df = pd.DataFrame(data['processed_data'])
+    df = pd.DataFrame(global_data['processed_data'])
     print(f"🔍 DEBUG: DataFrame created with {len(df)} rows")
     
     # Apply filters (same logic as Home)
