@@ -63,42 +63,54 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
                         dbc.Row([
                             # Category Filter
                             dbc.Col([
-                                html.Label("Categoría:", className="form-label"),
+                                html.Label("Categorías:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="category-filter",
-                                    options=[{"label": "Todas las categorías", "value": "all"}] + 
-                                            [{"label": cat, "value": cat} for cat in categories],
-                                    value="all",
-                                    placeholder="Selecciona una categoría",
-                                    clearable=False
+                                    id="transactions-category-filter",
+                                    options=[{"label": cat, "value": cat} for cat in categories],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona categorías (vacío = todas)"
                                 )
-                            ], width=4),
+                            ], width=12, lg=4),
                             
                             # Responsible Filter
                             dbc.Col([
-                                html.Label("Responsable:", className="form-label"),
+                                html.Label("Responsables:", className="fw-bold mb-2"),
                                 dcc.Dropdown(
-                                    id="responsible-filter",
-                                    options=[{"label": "Todos los responsables", "value": "all"}] + 
-                                            [{"label": resp, "value": resp} for resp in responsibles],
-                                    value="all",
-                                    placeholder="Selecciona un responsable",
-                                    clearable=False
+                                    id="transactions-responsible-filter",
+                                    options=[{"label": resp, "value": resp} for resp in responsibles],
+                                    value=[],  # Empty list for multi-select
+                                    multi=True,
+                                    placeholder="Selecciona responsables (vacío = todos)"
                                 )
-                            ], width=4),
+                            ], width=12, lg=4),
                             
                             # Date Range Filter
                             dbc.Col([
-                                html.Label("Rango de Fechas:", className="form-label"),
-                                dcc.DatePickerRange(
-                                    id="date-range-filter",
-                                    start_date=min_date,
-                                    end_date=max_date,
-                                    display_format='DD/MM/YYYY',
-                                    start_date_placeholder_text="Fecha inicio",
-                                    end_date_placeholder_text="Fecha fin"
-                                )
-                            ], width=4)
+                                html.Label("Rango de Fechas:", className="fw-bold mb-2"),
+                                dbc.Row([
+                                    dbc.Col([
+                                        html.Label("Desde:", className="small text-muted"),
+                                        dcc.Input(
+                                            id="transactions-start-date",
+                                            type="date",
+                                            value=min_date,
+                                            className="form-control",
+                                            style={'width': '100%'}
+                                        )
+                                    ], width=6),
+                                    dbc.Col([
+                                        html.Label("Hasta:", className="small text-muted"),
+                                        dcc.Input(
+                                            id="transactions-end-date",
+                                            type="date",
+                                            value=max_date,
+                                            className="form-control",
+                                            style={'width': '100%'}
+                                        )
+                                    ], width=6)
+                                ])
+                            ], width=12, lg=4)
                         ], className="mb-3"),
                         
                         # Summary Stats
@@ -163,13 +175,13 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
      Output("filtered-count", "children"),
      Output("filtered-avg", "children"),
      Output("filtered-max", "children")],
-    [Input("category-filter", "value"),
-     Input("responsible-filter", "value"),
-     Input("date-range-filter", "start_date"),
-     Input("date-range-filter", "end_date")],
+    [Input("transactions-category-filter", "value"),
+     Input("transactions-responsible-filter", "value"),
+     Input("transactions-start-date", "value"),
+     Input("transactions-end-date", "value")],
     [State("transactions-data-store", "data")]
 )
-def update_transactions_table(category, responsible, start_date, end_date, data):
+def update_transactions_table(categories, responsibles, start_date, end_date, data):
     """Update transactions table based on filters"""
     
     if not data or not data.get('processed_data'):
@@ -178,11 +190,11 @@ def update_transactions_table(category, responsible, start_date, end_date, data)
     df = pd.DataFrame(data['processed_data'])
     
     # Apply filters
-    if category and category != "all":
-        df = df[df['Category'] == category]
+    if categories and len(categories) > 0:
+        df = df[df['Category'].isin(categories)]
     
-    if responsible and responsible != "all":
-        df = df[df['Responsible'] == responsible]
+    if responsibles and len(responsibles) > 0:
+        df = df[df['Responsible'].isin(responsibles)]
     
     if start_date and end_date:
         df = df[(df['Date'] >= start_date) & (df['Date'] <= end_date)]
