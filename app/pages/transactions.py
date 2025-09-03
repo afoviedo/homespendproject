@@ -193,10 +193,20 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
 def update_transactions_summary(responsibles, categories, start_date, end_date, data):
     """Update summary statistics based on filters - same logic as Home KPIs"""
     
+    print(f"🔍 DEBUG: update_transactions_summary called with data: {data is not None}")
+    print(f"🔍 DEBUG: data type: {type(data)}")
+    if data:
+        print(f"🔍 DEBUG: data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in data}")
+        if 'processed_data' in data:
+            print(f"🔍 DEBUG: processed_data length: {len(data['processed_data'])}")
+    
     if not data or not data.get('processed_data'):
+        print(f"🔍 DEBUG: No data or processed_data, returning 'No hay datos disponibles'")
         return html.Div("No hay datos disponibles")
     
     df = pd.DataFrame(data['processed_data'])
+    print(f"🔍 DEBUG: DataFrame created with {len(df)} rows")
     
     # Apply filters (same logic as Home)
     if responsibles and len(responsibles) > 0:
@@ -269,10 +279,20 @@ def update_transactions_summary(responsibles, categories, start_date, end_date, 
 def update_transactions_table(responsibles, categories, start_date, end_date, data):
     """Update transactions table based on filters - same logic as Home charts"""
     
+    print(f"🔍 DEBUG: update_transactions_table called with data: {data is not None}")
+    print(f"🔍 DEBUG: data type: {type(data)}")
+    if data:
+        print(f"🔍 DEBUG: data keys: {list(data.keys()) if isinstance(data, dict) else 'Not a dict'}")
+        print(f"🔍 DEBUG: processed_data exists: {'processed_data' in data}")
+        if 'processed_data' in data:
+            print(f"🔍 DEBUG: processed_data length: {len(data['processed_data'])}")
+    
     if not data or not data.get('processed_data'):
+        print(f"🔍 DEBUG: No data or processed_data, returning 'No hay datos disponibles'")
         return html.Div("No hay datos disponibles")
     
     df = pd.DataFrame(data['processed_data'])
+    print(f"🔍 DEBUG: DataFrame created with {len(df)} rows")
     
     # Apply filters (same logic as Home)
     if responsibles and len(responsibles) > 0:

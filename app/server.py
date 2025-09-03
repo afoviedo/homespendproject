@@ -487,7 +487,8 @@ def toggle_sidebar(n_clicks, is_open):
 @callback(
     [Output("home-data-store", "data"),
      Output("transactions-data-store", "data")],
-    [Input("global-data-store", "data")]
+    [Input("global-data-store", "data")],
+    prevent_initial_call=False
 )
 def sync_page_data(global_data):
     """Sync data to all page stores"""
