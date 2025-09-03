@@ -38,9 +38,24 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
     categories = sorted(df['Category'].unique()) if 'Category' in df.columns else []
     responsibles = sorted(df['Responsible'].unique()) if 'Responsible' in df.columns else []
     
-    # Date range defaults - convert to string format like home page
-    min_date = df['Date'].min().strftime('%Y-%m-%d') if not df.empty else (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
-    max_date = df['Date'].max().strftime('%Y-%m-%d') if not df.empty else datetime.now().strftime('%Y-%m-%d')
+    # Date range defaults - handle both string and datetime formats
+    if not df.empty:
+        min_date_obj = df['Date'].min()
+        max_date_obj = df['Date'].max()
+        
+        # Convert to string if it's a datetime object
+        if hasattr(min_date_obj, 'strftime'):
+            min_date = min_date_obj.strftime('%Y-%m-%d')
+        else:
+            min_date = str(min_date_obj)
+            
+        if hasattr(max_date_obj, 'strftime'):
+            max_date = max_date_obj.strftime('%Y-%m-%d')
+        else:
+            max_date = str(max_date_obj)
+    else:
+        min_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+        max_date = datetime.now().strftime('%Y-%m-%d')
     
     return dbc.Container([
         # Header
