@@ -95,7 +95,8 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
                                     start_date=min_date,
                                     end_date=max_date,
                                     display_format='DD/MM/YYYY',
-                                    placeholder="Selecciona fechas"
+                                    start_date_placeholder_text="Fecha inicio",
+                                    end_date_placeholder_text="Fecha fin"
                                 )
                             ], width=4)
                         ], className="mb-3"),
