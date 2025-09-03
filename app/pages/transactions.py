@@ -178,11 +178,16 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
     [Input("transactions-category-filter", "value"),
      Input("transactions-responsible-filter", "value"),
      Input("transactions-start-date", "value"),
-     Input("transactions-end-date", "value")],
+     Input("transactions-end-date", "value"),
+     Input("transactions-data-store", "data")],  # Add data store as input to trigger on data change
     [State("transactions-data-store", "data")]
 )
-def update_transactions_table(categories, responsibles, start_date, end_date, data):
+def update_transactions_table(categories, responsibles, start_date, end_date, data, data_state):
     """Update transactions table based on filters"""
+    
+    # Use data_state if data is None (initial load)
+    if data is None:
+        data = data_state
     
     if not data or not data.get('processed_data'):
         return html.Div("No hay datos disponibles"), "₡0", "0", "₡0", "₡0"
@@ -240,12 +245,12 @@ def update_transactions_table(categories, responsibles, start_date, end_date, da
         table = dbc.Table([
             html.Thead([
                 html.Tr([
-                    html.Th("Fecha", className="text-nowrap"),
-                    html.Th("Descripción", className="text-nowrap"),
-                    html.Th("Categoría", className="text-nowrap"),
-                    html.Th("Responsable", className="text-nowrap"),
-                    html.Th("Monto", className="text-end text-nowrap"),
-                    html.Th("Tarjeta", className="text-nowrap")
+                    html.Td("Fecha", className="text-nowrap fw-bold"),
+                    html.Td("Descripción", className="text-nowrap fw-bold"),
+                    html.Td("Categoría", className="text-nowrap fw-bold"),
+                    html.Td("Responsable", className="text-nowrap fw-bold"),
+                    html.Td("Monto", className="text-end text-nowrap fw-bold"),
+                    html.Td("Tarjeta", className="text-nowrap fw-bold")
                 ])
             ]),
             html.Tbody(table_rows)
