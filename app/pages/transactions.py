@@ -187,7 +187,8 @@ def create_layout(df: Optional[pd.DataFrame] = None) -> html.Div:
      Input("transactions-category-filter", "value"),
      Input("transactions-start-date", "value"),
      Input("transactions-end-date", "value")],
-    [State("transactions-data-store", "data")]
+    [State("transactions-data-store", "data")],
+    prevent_initial_call=False
 )
 def update_transactions_summary(responsibles, categories, start_date, end_date, data):
     """Update summary statistics based on filters - same logic as Home KPIs"""
@@ -262,7 +263,8 @@ def update_transactions_summary(responsibles, categories, start_date, end_date, 
      Input("transactions-category-filter", "value"),
      Input("transactions-start-date", "value"),
      Input("transactions-end-date", "value")],
-    [State("transactions-data-store", "data")]
+    [State("transactions-data-store", "data")],
+    prevent_initial_call=False
 )
 def update_transactions_table(responsibles, categories, start_date, end_date, data):
     """Update transactions table based on filters - same logic as Home charts"""
