@@ -263,7 +263,7 @@ def update_transactions_table(categories, responsibles, start_date, end_date, da
 @callback(
     Output("transactions-table-container", "children", allow_duplicate=True),
     Input("transactions-data-store", "data"),
-    prevent_initial_call=False
+    prevent_initial_call='initial_duplicate'
 )
 def initial_table_load(data):
     """Load table initially when data becomes available"""
@@ -292,7 +292,7 @@ def initial_table_load(data):
                 html.Td(row['Date'], className="text-nowrap"),
                 html.Td(row['Description'], className="text-truncate"),
                 html.Td(row['Category'], className="text-nowrap"),
-                html.Td(row['Responsible'], className="text-truncate"),
+                html.Td(row['Responsible'], className="text-nowrap"),
                 html.Td(f"₡{row['Amount']:,.0f}", className="text-end fw-bold"),
                 html.Td(row['Card'], className="text-nowrap")
             ])
